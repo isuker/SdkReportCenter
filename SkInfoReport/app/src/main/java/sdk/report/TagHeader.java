@@ -45,10 +45,10 @@ public class TagHeader {
     public JSONObject toJson() {
         JSONObject strHdr = new JSONObject();
         try {
-            strHdr.put("imei", getStrImei());
-            strHdr.put("streamid", getStrStreamId());
-            strHdr.put("token", getStrToken());
-            strHdr.put("devtm", startPlayTm);
+            strHdr.put("imei", getStrImei());         // get from local - ok
+            strHdr.put("streamid", getStrStreamId()); // get from server-input - nono
+            strHdr.put("token", getStrToken());       // get from server-input - nono
+            strHdr.put("devtm", startPlayTm);         // get from local - ok
         } catch (JSONException e) {
             e.printStackTrace();
         }

@@ -2,6 +2,7 @@ package sdk.report;
 
 import android.content.Context;
 import android.os.Build;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -69,20 +70,22 @@ public class TagStartPlay {
     public JSONObject toJson() {
         JSONObject strCtx = new JSONObject();
         try {
-            strCtx.put("internetip", sysInfo.getStrInternetIp());
-            strCtx.put("dnsip", sysInfo.getStrDnsIp());
-            strCtx.put("cdnip", sysInfo.getStrCdnIp());
-            strCtx.put("manufacturer", getStrManufacturer());
-            strCtx.put("model", getStrModel());
-            strCtx.put("product", getStrProduct());
-            strCtx.put("board", getStrBoard());
-            strCtx.put("cpuarch", getStrCpuArch());
-            strCtx.put("osver", getStrOsVer());
-            strCtx.put("sdkver", getStrSdkVer());
-            strCtx.put("appvername", getStrAppVerName());
-            strCtx.put("appvercode", getStrAppVerCode());
-            strCtx.put("playurl", sysInfo.getStrPlayUrl());
-            strCtx.put("platform", getStrPlatform());
+            Log.w("SdkReport_test", "dns-ip:"+sysInfo.getStrDnsIp());
+            strCtx.put("pkgname", sysInfo.getStrPkgName());  // get from app local - okok
+            strCtx.put("internetip", sysInfo.getStrInternetIp());// input from app server, net out ip address - nono
+            strCtx.put("dnsip", sysInfo.getStrDnsIp());      // get from app local, current device used dns ip address - okok
+            strCtx.put("cdnip", sysInfo.getStrCdnIp());      // get from app local, rtmp or http connect ip address - nono
+            strCtx.put("manufacturer", getStrManufacturer());// get from app local - okok
+            strCtx.put("model", getStrModel());              // get from app local - okok
+            strCtx.put("product", getStrProduct());          // get from app local - okok
+            strCtx.put("board", getStrBoard());              // get from app local - okok
+            strCtx.put("cpuarch", getStrCpuArch());          // get from app local - okok
+            strCtx.put("osver", getStrOsVer());              // get from app local - okok
+            strCtx.put("sdkver", getStrSdkVer());            // get from app local - okok
+            strCtx.put("appvername", getStrAppVerName());    // get from app local - okok
+            strCtx.put("appvercode", getStrAppVerCode());    // get from app local - okok
+            strCtx.put("playurl", sysInfo.getStrPlayUrl());  // input from app server - nono
+            strCtx.put("platform", getStrPlatform());        // get from app local - okok
         } catch (JSONException e) {
             e.printStackTrace();
         }

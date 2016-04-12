@@ -20,7 +20,7 @@ import java.util.Enumeration;
  * Created by suker on 16-4-9.
  */
 public class SysNetwork {
-    String TAG = "SdkReport_" + SysNetwork.class.getSimpleName();
+    final static String TAG = "SdkReport_" + SysNetwork.class.getSimpleName();
     Context activityCtx = null;
     String mLogHost = null;
     String hostIpAddr = null;
@@ -29,11 +29,65 @@ public class SysNetwork {
     long lastTimeStamp = 0;
     long appNetSndBytes = 0;
     long appNetRcvBytes = 0;
-    int netPingMs = 0;
+    String pingMsValue = null;
 
     public SysNetwork(Context ctx) {
         activityCtx = ctx;
     }
+
+
+    public String getmLogHost() {
+        return mLogHost;
+    }
+
+    public void setmLogHost(String mLogHost) {
+        this.mLogHost = mLogHost;
+    }
+
+    public String getHostIpAddr() {
+        return hostIpAddr;
+    }
+
+    public void setHostIpAddr(String hostIpAddr) {
+        this.hostIpAddr = hostIpAddr;
+    }
+
+    public long getLastTotalRxBytes() {
+        return lastTotalRxBytes;
+    }
+
+    public void setLastTotalRxBytes(long lastTotalRxBytes) {
+        this.lastTotalRxBytes = lastTotalRxBytes;
+    }
+
+    public long getLastTimeStamp() {
+        return lastTimeStamp;
+    }
+
+    public void setLastTimeStamp(long lastTimeStamp) {
+        this.lastTimeStamp = lastTimeStamp;
+    }
+
+    public long getAppNetSndBytes() {
+        return appNetSndBytes;
+    }
+
+    public void setAppNetSndBytes(long appNetSndBytes) {
+        this.appNetSndBytes = appNetSndBytes;
+    }
+
+    public long getAppNetRcvBytes() {
+        return appNetRcvBytes;
+    }
+
+    public void setAppNetRcvBytes(long appNetRcvBytes) {
+        this.appNetRcvBytes = appNetRcvBytes;
+    }
+
+    public String getPingMs(String urlDomain) {
+        return pingValue(urlDomain);
+    }
+
 
     private boolean networkConnected() {
         if (null == activityCtx) {
@@ -139,6 +193,7 @@ public class SysNetwork {
     }
 
     public void showNetSpeed() {
+
         long nowTotalRxBytes = getTotalRxBytes();
         long nowTimeStamp = System.currentTimeMillis();
         long speed = ((nowTotalRxBytes - lastTotalRxBytes) * 1000 / (nowTimeStamp - lastTimeStamp));
@@ -185,117 +240,162 @@ public class SysNetwork {
         Log.w(TAG, "uidRxPkt.............：" + uidRxPkt);
     }
 
-    //===========
-    public boolean pingHost(String str) {
-        String result = null;
+
+    public String getSysDnsIp() {
+        Log.w(TAG, "run-getdns-bgn");
+        String strOut = "";
+
         try {
-            String ip = "www.baidu.com";// 除非百度挂了，否则用这个应该没问题~
-            Process p = Runtime.getRuntime().exec("ping -c 3 -w 100 " + ip);//ping3次
-// 读取ping的内容，可不加。
-            InputStream input = p.getInputStream();
-            BufferedReader in = new BufferedReader(new InputStreamReader(input));
-            StringBuffer stringBuffer = new StringBuffer();
-            String content = "";
-            while ((content = in.readLine()) != null) {
-                stringBuffer.append(content);
-            }
-            Log.i("TTT", "result content : " + stringBuffer.toString());
+            final Process runPrcs = Runtime.getRuntime().exec("getprop");
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(runPrcs.getInputStream()), 8192);
+            String str2;
+            while ((str2 = bufferedReader.readLine()) != null) {
+                String[] dnsIpAry = str2.split(" ");
+                if (-1 == dnsIpAry[0].indexOf("net.dns")) {
+                    continue;
+                }
 
-// PING的状态
-            int status = p.waitFor();
-            if (status == 0) {
-                result = "successful~";
-                return true;
-            } else {
-                result = "failed~ cannot reach the IP address";
+                for (int i = 0; i < dnsIpAry.length; i++) {
+                    if ((dnsIpAry[i].indexOf("[1") != -1)
+                            || (dnsIpAry[i].indexOf("[2") != -1)) {
+                        strOut += dnsIpAry[i].substring(1, dnsIpAry[i].length() - 1) + ",";
+                    }
+                }
             }
-
+            bufferedReader.close();
         } catch (IOException e) {
-            result = "failed~ IOException";
-        } catch (InterruptedException e) {
-            result = "failed~ InterruptedException";
-        } finally {
-            Log.i("TTT", "result = " + result);
+            e.printStackTrace();
         }
-
-        return false;
-
+        Log.w(TAG, "run-getdns-end================================:" + strOut);
+        return strOut;
     }
 
 
-//    public String pingHost(String str){
-//        String resault="";
-//        Log.w(TAG, "ping-host-run");
-//        try {
-//            Process p = Runtime.getRuntime().exec("ping -c 1 -w 100 " +str);
-//            int status = p.waitFor();
-//            if (status == 0) {
-//                // mTextView.setText("success") ;
-//                resault="success";
-//            }
-//            else
-//            {
-//                resault="faild";
-//                // mTextView.setText("fail");
-//            }
-//        } catch (IOException e) {
-//            // mTextView.setText("Fail: IOException"+"\n");
-//        } catch (InterruptedException e) {
-//            // mTextView.setText("Fail: InterruptedException"+"\n");
-//        }
-//        Log.w(TAG, "ping-host-ext:"+resault);
-//        return resault;
-//    }
+    private String pingValue(final String domain) {
+        Log.w(TAG, "run-getping-bgn");
+        long bgnMs = System.currentTimeMillis();
+        pingMsValue=null;
 
-    public String getmLogHost() {
-        return mLogHost;
+        new Thread() {
+            public void run() {
+                //Log.w(TAG, "run-getping-run");
+                String result = null;
+                try {
+                    String ip = domain;
+                    Process p = Runtime.getRuntime().exec("ping -c 5 -i 0.2 " + ip);
+                    //Process p = Runtime.getRuntime().exec("ping -c 3 -w 100 " + ip);
+                    InputStream input = p.getInputStream();
+                    BufferedReader in = new BufferedReader(new InputStreamReader(input));
+                    StringBuffer stringBuffer = new StringBuffer();
+                    String content = "";
+
+                    while ((content = in.readLine()) != null) {
+                        stringBuffer.append(content);
+                        if (-1 == content.indexOf("rtt")) {
+                            continue;
+                        }
+
+                        // rtt min/avg/max/mdev = 6.888/10.222/14.562/2.726 ms
+                        String[] splitAry = content.split("=");
+                        if (splitAry.length > 1) {
+                            String[] itemAry = splitAry[1].split("/");
+                            for (int j = 0; j < itemAry.length; j++) {
+                               // Log.i(TAG, "+++++++++++++++++++++++ping-:" + 1 + ", j:" + j + ":" + itemAry[j]);
+                            }
+                            if (itemAry.length > 1) {
+                                Log.i(TAG, "+++++++++++++++++++++++ping rtt:" + content + ", aver:" + itemAry[1]);
+                                pingMsValue = itemAry[1];
+                            }
+                        }
+                    }
+
+                    int status = p.waitFor();
+                    if (status == 0) {
+                        result = "successful~";
+                    } else {
+                        result = "failed~ cannot reach the IP address";
+                    }
+                } catch (IOException e) {
+                    result = "failed~ IOException";
+                } catch (InterruptedException e) {
+                    result = "failed~ InterruptedException";
+                } finally {
+                    Log.i(TAG, "result = " + result);
+                }
+            }
+        }.start();
+        //Log.w(TAG, "run-getping-end");
+        //Log.w(TAG, "get ping-value wait");
+        while (null == pingMsValue) {
+            msSleep(20);
+            if ((System.currentTimeMillis() - bgnMs) > 2000) {
+                pingMsValue = "not";
+                break;
+            }
+        }
+        long costMs = System.currentTimeMillis()-bgnMs;
+        Log.w(TAG, "run-getping-end:"+pingMsValue+", cost-ms:"+costMs);
+        return pingMsValue;
     }
 
-    public void setmLogHost(String mLogHost) {
-        this.mLogHost = mLogHost;
+    private void msSleep(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
-
-    public String getHostIpAddr() {
-        return hostIpAddr;
-    }
-
-    public void setHostIpAddr(String hostIpAddr) {
-        this.hostIpAddr = hostIpAddr;
-    }
-
-    public long getLastTotalRxBytes() {
-        return lastTotalRxBytes;
-    }
-
-    public void setLastTotalRxBytes(long lastTotalRxBytes) {
-        this.lastTotalRxBytes = lastTotalRxBytes;
-    }
-
-    public long getLastTimeStamp() {
-        return lastTimeStamp;
-    }
-
-    public void setLastTimeStamp(long lastTimeStamp) {
-        this.lastTimeStamp = lastTimeStamp;
-    }
-
-    public long getAppNetSndBytes() {
-        return appNetSndBytes;
-    }
-
-    public void setAppNetSndBytes(long appNetSndBytes) {
-        this.appNetSndBytes = appNetSndBytes;
-    }
-
-    public long getAppNetRcvBytes() {
-        return appNetRcvBytes;
-    }
-
-    public void setAppNetRcvBytes(long appNetRcvBytes) {
-        this.appNetRcvBytes = appNetRcvBytes;
-    }
-
-    public int getPingMs() {
-        return netPingMs;
-    }
+    // min/avg/max/mdev = 10.578/12.489/16.958/2.283 ms
 }
+
+
+//            Process localProcess = null;
+//            try {
+//                localProcess = Runtime.getRuntime().exec("getprop net.dns1");
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            String os=System.getProperty("os.name");
+//            String ip =System.getProperty("os.ip");
+//            strDnsIp = localProcess.toString()+", "+os+", "+ip;
+//strDnsIp = System.getProperty("net.dns1") + ", " + System.getProperty("net.dns2") + ", " + System.getProperty("net.dns3");
+
+
+//                    Log.w(TAG, "total-num:" + dnsIpAry.length);
+//                    for (i = 0; i < dnsIpAry.length; i++) {
+//                        if (dnsIpAry[i].length() <= 0) {
+//                            continue;
+//                        }
+//                        if(dnsIpAry[i].indexOf("net.dns")!=-1){
+//
+//                            Log.w(TAG, ", id:" + i + ", tag:" + dnsIpAry[i]);
+//                            Log.w(TAG, ", id:" + i + ", tag:" + dnsIpAry[i+1]);
+//                            //strOut+=dnsIpAry[i]+dnsIpAry[i+1]+", ";
+//                        }
+//                        if (' ' == dnsIpAry[i].charAt(0)) {
+//                            continue;
+//                        }
+//                        Log.w(TAG, ", id:" + i + ", tag:" + dnsIpAry[i]);
+//                        if (count < cpuSlipt.length) {
+//                            cpuSlipt[count] = dnsIpAry[i];
+//                        }
+//                        strOut+=dnsIpAry[i];
+//                        count++;
+//                    }
+//                    //Log.w(TAG, title + ", id:" + i + ", total:" + count);
+//                    if (count > 7) {
+//                        String strCpuPencent = cpuSlipt[2];
+//                        cpuPara.cpuPencent = myAatoi(strCpuPencent);
+//
+//                        String strMemRssKb = cpuSlipt[6];
+//                        cpuPara.memRss = myAatoi(strMemRssKb);
+//
+//                        cpuPara.progressName = cpuSlipt[count - 1];
+//                        Log.w(TAG, title + ", progress cpu pencent:" + strCpuPencent + ", mem rss kb:" + strMemRssKb + ", progress name:" + cpuPara.progressName + ", cpu:" + cpuPara.cpuPencent + ", rss:" + cpuPara.memRss);
+//                    }
+//                int pos = str2.indexOf("Name");
+//                if (pos > 0) {
+//                    startTag = true;
+//                }
+
+

@@ -16,7 +16,7 @@ public class TagVideoFirstDisplay {
     public JSONObject toJson() {
         JSONObject strCtx = new JSONObject();
         try {
-            strCtx.put("firstdisplaycostms", getFirstDisplayCostMs());
+            strCtx.put("firstdisplaycostms", getFirstDisplayCostMs());    // get from app local - okok
         } catch (JSONException e) {
             e.printStackTrace();
         }

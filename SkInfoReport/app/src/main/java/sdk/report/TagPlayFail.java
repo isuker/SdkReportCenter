@@ -7,13 +7,13 @@ import org.json.JSONObject;
  * Created by suker on 16-4-6.
  */
 public class TagPlayFail {
-
     private String playUrl;
     private int failNo;
     private String failMsg;
+    SystemInfo sysInfo = null;
 
-    public String getPlayUrl() {
-        return playUrl;
+    public TagPlayFail(SystemInfo sys) {
+        sysInfo = sys;
     }
 
     public int getFailNo() {
@@ -27,9 +27,9 @@ public class TagPlayFail {
     public JSONObject toJson() {
         JSONObject strCtx = new JSONObject();
         try {
-            strCtx.put("playurl", getPlayUrl());
-            strCtx.put("failno", getFailNo());
-            strCtx.put("failmsg", getFailMsg());
+            strCtx.put("playurl", sysInfo.getStrPlayUrl());  // input from app server - nono
+            strCtx.put("failno", getFailNo());      // get from app local - nono
+            strCtx.put("failmsg", getFailMsg());    // get from app local - nono
         } catch (JSONException e) {
             e.printStackTrace();
         }

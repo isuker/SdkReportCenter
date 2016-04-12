@@ -22,12 +22,12 @@ public class TagPauseEnd {
         float sdRate = sysInfo.getSdcardRate();
 
         try {
-            jsnObj.put("cpuinfo", sysInfo.getCpuJson());
-            jsnObj.put("meminfo", sysInfo.getMemJson());
-            jsnObj.put("bandwidth", bwsecper);
-            jsnObj.put("bwsec3aver", mBwSec3Aver);
-            jsnObj.put("bwsec10aver", mBwSec10Aver);
-            jsnObj.put("diskpencent", sdRate);
+            jsnObj.put("cpuinfo", sysInfo.getCpuJson()); // get from app local - okok
+            jsnObj.put("meminfo", sysInfo.getMemJson()); // get from app local - okok
+            jsnObj.put("bandwidth", bwsecper);           // get from app local - nono
+            jsnObj.put("bwsec3aver", mBwSec3Aver);       // get from app local - nono
+            jsnObj.put("bwsec10aver", mBwSec10Aver);     // get from app local - nono
+            jsnObj.put("diskpencent", sdRate);           // get from app local - okok
         } catch (JSONException e) {
             e.printStackTrace();
         }

@@ -59,7 +59,7 @@ public class ReportCenter {
         heartBeat = new TagPlayHeartBeat(sysInfo);
         pauseBegin = new TagPauseBegin();
         pauseEnd = new TagPauseEnd(sysInfo);
-        playFail = new TagPlayFail();
+        playFail = new TagPlayFail(sysInfo);
         stopPlay = new TagStopPlay();
         socketHandle = new SocketManager();
         hbThread = new playHeartBeatThread();
@@ -74,7 +74,7 @@ public class ReportCenter {
                     Log.w(TAG, "thread-play-heartbeat-ext");
                     return;
                 }
-                Log.w(TAG, "handle-thread-play-heartbeat-bef");
+                //Log.w(TAG, "handle-thread-play-heartbeat-bef");
                 reportData(SDK_REPORT_PLAY_HEART_BEAT);
                 sysInfo.getSysNet().showNetSpeed();
 
@@ -108,13 +108,12 @@ public class ReportCenter {
         final int inType = type;
         new Thread() {
             public void run() {
-//                JSONObject jsnContent = null;
                 playHeader = new TagHeader(sysInfo, "12345", "abcdef");
                 JSONObject jsnHeader = playHeader.toJson();
                 JSONObject jsnTag = new JSONObject();
                 JSONObject jsnSender = new JSONObject();
-//                String strTitle = null;
                 ReportData dat = null;
+
                 switch (inType) {
                     case SDK_REPORT_PLAY_START_PLAY:
                         dat = onReportStartPlay();
@@ -155,16 +154,16 @@ public class ReportCenter {
                 }
 
                 final String inJson = jsnSender.toString();
-                Log.w(TAG, "========================================" + inJson);
+                Log.w(TAG, "=============" + inJson);
 
                 if (needUdpSocket(inType)) {
-                    Log.w(TAG, "udp-send-start");
+                    //Log.w(TAG, "udp-send-start");
                     //socketHandle.udpSend(inJson);
-                    Log.w(TAG, "udp-send-end");
+                   // Log.w(TAG, "udp-send-end");
                 } else {
-                    Log.w(TAG, "tcp-send-start");
+                    //Log.w(TAG, "tcp-send-start");
                     //socketHandle.tcpSend(inJson);
-                    Log.w(TAG, "tcp-send-end");
+                    //Log.w(TAG, "tcp-send-end");
                 }
             }
         }.start();
@@ -209,7 +208,8 @@ public class ReportCenter {
         if (!playerRun) {
             return null;
         }
-        return (new ReportData(pauseBegin.toJson(), "pausebegin"));
+        //return (new ReportData(pauseBegin.toJson(), "pausebegin"));
+        return (new ReportData(pauseEnd.toJson(), "pausebegin"));
     }
 
     public ReportData onReportPlayPauseEnd() {
@@ -267,7 +267,6 @@ public class ReportCenter {
         }
         sysInfo.setStrPlayUrl(url);
         sysInfo.setStrInternetIp(inIp);
-        // dns-ip, cdn-ip local get
     }
 
 

@@ -16,7 +16,7 @@ public class TagStopPlay {
     public JSONObject toJson() {
         JSONObject strCtx = new JSONObject();
         try {
-            strCtx.put("interval", getPlayIntervalMin());
+            strCtx.put("interval", getPlayIntervalMin()); // get from stop-start ms, use minute - ok
         } catch (JSONException e) {
             e.printStackTrace();
         }

@@ -18,6 +18,8 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * Created by suker on 16-4-6.
@@ -31,10 +33,12 @@ public class SystemInfo {
     Context activityCtx = null;
     SysNetwork sysNet = null;
     //==============================================================================================
-    String strInternetIp = null;
-    String strDnsIp = null;
-    String strCdnIp = null;
-    String strPlayUrl = null;
+    String strInternetIp = null; // input from app server, net out ip address
+    String strDnsIp = null;      // get from app local, current device used dns ip address
+    String strCdnIp = null;      // get from app local, rtmp or http connect ip address
+    String strPlayUrl = null;    // input from app server
+    String strUrlDomain = null;
+    String strPkgName = null;    // get from app loca
     long mLogMaxMemSize = 0;
 
     public SysNetwork getSysNet() {
@@ -50,6 +54,12 @@ public class SystemInfo {
     }
 
     public String getStrDnsIp() {
+        if (null == strDnsIp) {
+            if (null == sysNet) {
+                return null;
+            }
+            strDnsIp = sysNet.getSysDnsIp();
+        }
         return strDnsIp;
     }
 
@@ -61,6 +71,7 @@ public class SystemInfo {
         return strCdnIp;
     }
 
+
     public void setStrCdnIp(String strCdnIp) {
         this.strCdnIp = strCdnIp;
     }
@@ -71,6 +82,45 @@ public class SystemInfo {
 
     public void setStrPlayUrl(String strPlayUrl) {
         this.strPlayUrl = strPlayUrl;
+        String domainStart = null;
+        int hdrPos = strPlayUrl.indexOf("://");
+        int endPos = 0;
+        if (-1 == hdrPos) {
+            return;
+        }
+        Log.i(TAG, "+++++++++++++++++++++++domain-start:" + hdrPos);
+        domainStart = strPlayUrl.substring(hdrPos + 3);
+        endPos = domainStart.indexOf("/");
+        if (-1 != endPos) {
+            setStrUrlDomain(domainStart.substring(0, endPos));
+        }
+    }
+
+
+    public String getStrPkgName() {
+        if (null == strPkgName) {
+            if (null == activityCtx) {
+                return null;
+            }
+            strPkgName = activityCtx.getPackageName();
+        }
+        return strPkgName;
+    }
+
+
+    //----------------------------------------------------------------------------------------------
+    public static String getDNSIp(String url) throws UnknownHostException {
+        InetAddress bupt = InetAddress.getByName(url);
+        return bupt.getHostAddress();
+    }
+
+    public String getStrUrlDomain() {
+        return strUrlDomain;
+    }
+
+    public void setStrUrlDomain(String urlDomain) {
+        Log.i(TAG, "+++++++++++++++++++++++domain-name:" + urlDomain);
+        this.strUrlDomain = urlDomain;
     }
     //==============================================================================================
 
@@ -489,4 +539,6 @@ public class SystemInfo {
         }
         return "appvercode";
     }
+
+
 }

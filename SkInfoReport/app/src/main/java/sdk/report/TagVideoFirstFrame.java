@@ -36,11 +36,11 @@ public class TagVideoFirstFrame {
     public JSONObject toJson() {
         JSONObject strCtx = new JSONObject();
         try {
-            strCtx.put("framesize", getFrameSize());
-            strCtx.put("width", getResoWidth());
-            strCtx.put("height", getResoHeight());
-            strCtx.put("fps", getVidFps());
-            strCtx.put("bitrates", getBitRates());
+            strCtx.put("framesize", getFrameSize());  // get from app local - nono
+            strCtx.put("width", getResoWidth());      // get from app local - nono
+            strCtx.put("height", getResoHeight());    // get from app local - nono
+            strCtx.put("fps", getVidFps());           // get from app local - nono
+            strCtx.put("bitrates", getBitRates());    // get from app local - nono
         } catch (JSONException e) {
             e.printStackTrace();
         }
