@@ -7,10 +7,9 @@ import org.json.JSONObject;
  * Created by suker on 16-4-6.
  */
 public class TagPlayFail {
-    private String playUrl;
     private int failNo;
     private String failMsg;
-    SystemInfo sysInfo = null;
+    private SystemInfo sysInfo = null;
 
     public TagPlayFail(SystemInfo sys) {
         sysInfo = sys;
@@ -20,9 +19,18 @@ public class TagPlayFail {
         return failNo;
     }
 
+    public void setFailNo(int failNo) {
+        this.failNo = failNo;
+    }
+
     public String getFailMsg() {
         return failMsg;
     }
+
+    public void setFailMsg(String failMsg) {
+        this.failMsg = failMsg;
+    }
+
 
     public JSONObject toJson() {
         JSONObject strCtx = new JSONObject();

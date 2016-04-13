@@ -71,7 +71,6 @@ public class SystemInfo {
         return strCdnIp;
     }
 
-
     public void setStrCdnIp(String strCdnIp) {
         this.strCdnIp = strCdnIp;
     }
@@ -83,7 +82,9 @@ public class SystemInfo {
     public void setStrPlayUrl(String strPlayUrl) {
         this.strPlayUrl = strPlayUrl;
         String domainStart = null;
+        //Log.i(TAG, "+++++++++++++++++++++++set-play-url:" + strPlayUrl);
         int hdrPos = strPlayUrl.indexOf("://");
+        //int hdrPos = strPlayUrl.indexOf("%3A%2F%2F");
         int endPos = 0;
         if (-1 == hdrPos) {
             return;
@@ -91,6 +92,7 @@ public class SystemInfo {
         Log.i(TAG, "+++++++++++++++++++++++domain-start:" + hdrPos);
         domainStart = strPlayUrl.substring(hdrPos + 3);
         endPos = domainStart.indexOf("/");
+        //endPos = domainStart.indexOf("%2F");
         if (-1 != endPos) {
             setStrUrlDomain(domainStart.substring(0, endPos));
         }
@@ -539,6 +541,4 @@ public class SystemInfo {
         }
         return "appvercode";
     }
-
-
 }

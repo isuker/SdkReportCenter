@@ -5,17 +5,21 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.MediaController;
 import android.widget.VideoView;
 
 import java.io.IOException;
 
+import sdk.report.ParamErr;
+import sdk.report.ParamPlay;
+import sdk.report.ParamVideo;
 import sdk.report.ReportCenter;
 
 public class MainActivity extends Activity {
     final String TAG = "SdkReport_" + MainActivity.class.getSimpleName(); // ReportCenter
     ReportCenter reportInfo;
-    Context activicyMain;
+    Context mContext;
+    String token = "rtmp://www.baidu.com/myapp";
+
     VideoView videoView;
     String playUrl = "http://devimages.apple.com/iphone/samples/bipbop/gear1/prog_index.m3u8";
     // "rtmp://www.baidu.com/myapp"
@@ -25,7 +29,157 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Log.w(TAG, "main-on-create-run");
-        activicyMain = this;
+        mContext = this;
+
+        Log.w(TAG, "main-on-create-report-start");
+        playerReportPlay();
+        msSleep(100);
+        playerReportFirstDisplay();
+        msSleep(100);
+        playerReportFirstFrame();
+        msSleep(100);
+        playerReportPauseBegin();
+        msSleep(100);
+        playerReportPauseEnd();
+        msSleep(100);
+        playerReportError();
+        msSleep(100);
+
+        int count = 0;
+        while (true) {
+            try {
+                Log.w(TAG, "main-on-create-start-ping");
+                Process p = Runtime.getRuntime().exec("ping -c 5 -i 0.2 " + "devimages.apple.com");
+//                p = Runtime.getRuntime().exec("wget http://www.xuebuyuan.com/1726264.html");
+//                p = Runtime.getRuntime().exec("wget http://blog.csdn.net/heng615975867/article/details/22812671");
+                Log.w(TAG, "main-on-create-stop-ping");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            msSleep(1 * 1000);
+            if (count++ > 50) {
+                break;
+            }
+        }
+//                msSleep(40 * 1000);
+        playerReportStop();
+
+        Log.w(TAG, "main-on-create-report-end");
+
+    }
+
+    //==suker-2016-0412 add player report >>==========================================================
+    //==suker-2016-0412 add player report >>==========================================================
+    //==suker-2016-0412 add player report >>==========================================================
+    private String getRemoteIpAddress() {
+        return "1.2.3.4";
+    }
+
+    private String getCdnName() {
+        return "www.ws.com";
+    }
+
+    private int getVideoWidth() {
+        return 720;
+    }
+
+    private int getVideoHeight() {
+        return 1280;
+    }
+
+    private int getVideoFps() {
+        return 25;
+    }
+
+    private int getBitRate() {
+        return 300 * 1000;
+    }
+
+    private int getErrorCode() {
+        return 1000;
+    }
+
+    //==suker-2016-0412 add player report >>==========================================================
+    ReportCenter playerReportCtx = null;
+
+    private void playerReportPlay() {
+        if (null == playerReportCtx) {
+            playerReportCtx = new ReportCenter(mContext);
+        }
+
+        ParamPlay paraPlay = new ParamPlay();
+        paraPlay.setStrUrl(token);
+        paraPlay.setStrToken(token);
+        paraPlay.setStrStreamId("1234");
+        paraPlay.setStrOutIp(getRemoteIpAddress());
+        paraPlay.setStrCdnName(getCdnName());
+        paraPlay.setiHeartBeatIvt(3 * 1000);
+
+        playerReportCtx.reportData(ReportCenter.SDK_REPORT_PLAY_START_PLAY, paraPlay);
+    }
+
+    private void playerReportFirstFrame() {
+        if (null == playerReportCtx) {
+            return;
+        }
+
+        ParamVideo paraVid = new ParamVideo();
+        paraVid.setFrameSize(128000);
+        paraVid.setWidth(getVideoWidth());
+        paraVid.setHeight(getVideoHeight());
+        paraVid.setFps(getVideoFps());
+        paraVid.setBitRates(getBitRate());
+        playerReportCtx.reportData(ReportCenter.SDK_REPORT_PLAY_VIDEO_FIRST_FRAME, paraVid);
+    }
+
+    private void playerReportFirstDisplay() {
+        if (null == playerReportCtx) {
+            return;
+        }
+        playerReportCtx.reportData(ReportCenter.SDK_REPORT_PLAY_VIDEO_FIRST_DISPLAY, null);
+    }
+
+    private void playerReportPauseBegin() {
+        if (null == playerReportCtx) {
+            return;
+        }
+        playerReportCtx.reportData(ReportCenter.SDK_REPORT_PLAY_PAUSE_BEGIN, null);
+    }
+
+    private void playerReportPauseEnd() {
+        if (null == playerReportCtx) {
+            return;
+        }
+        playerReportCtx.reportData(ReportCenter.SDK_REPORT_PLAY_PAUSE_END, null);
+    }
+
+    private void playerReportError() {
+        if (null == playerReportCtx) {
+            return;
+        }
+
+        ParamErr playErr = new ParamErr();
+        playErr.setiErrNo(getErrorCode());
+        playErr.setStrErr(String.valueOf(getErrorCode()));
+        playerReportCtx.reportData(ReportCenter.SDK_REPORT_PLAY_FAIL, playErr);
+
+    }
+
+    private void playerReportStop() {
+        if (null == playerReportCtx) {
+            return;
+        }
+        playerReportCtx.reportData(ReportCenter.SDK_REPORT_PLAY_STOP_PLAY, null);
+    }
+
+    private void msSleep(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
 
 
 //        new Thread() {
@@ -40,49 +194,6 @@ public class MainActivity extends Activity {
 //                }
 //            }
 //        };
-
-//        new Thread() {
-//            public void run() {
-                Log.w(TAG, "main-on-create-report-start");
-                reportInfo = new ReportCenter(activicyMain);
-                reportInfo.initPlay(playUrl, "1.2.3.4", 3 * 1000); // 30*1000
-                //reportInfo.initPlay("http://www.baidu.com/a.m3u8", "1.2.3.4", 3 * 1000);
-                reportInfo.reportData(ReportCenter.SDK_REPORT_PLAY_START_PLAY);
-                msSleep(100);
-                reportInfo.reportData(ReportCenter.SDK_REPORT_PLAY_VIDEO_FIRST_FRAME);
-                msSleep(100);
-                reportInfo.reportData(ReportCenter.SDK_REPORT_PLAY_VIDEO_FIRST_DISPLAY);
-                msSleep(100);
-                reportInfo.reportData(ReportCenter.SDK_REPORT_PLAY_PAUSE_BEGIN);
-                msSleep(100);
-                reportInfo.reportData(ReportCenter.SDK_REPORT_PLAY_PAUSE_END);
-                msSleep(100);
-                reportInfo.reportData(ReportCenter.SDK_REPORT_PLAY_FAIL);
-
-                int count = 0;
-                while (true)
-                {
-                    try {
-                        Log.w(TAG, "main-on-create-start-ping");
-                        Process p = Runtime.getRuntime().exec("ping -c 5 -i 0.2 " + "devimages.apple.com");
-                        p = Runtime.getRuntime().exec("wget http://www.xuebuyuan.com/1726264.html");
-                        p = Runtime.getRuntime().exec("wget http://blog.csdn.net/heng615975867/article/details/22812671");
-                        Log.w(TAG, "main-on-create-stop-ping");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    msSleep(1 * 1000);
-                    if (count ++ > 50)
-                    {
-                        break;
-                    }
-                }
-//                msSleep(40 * 1000);
-                reportInfo.reportData(ReportCenter.SDK_REPORT_PLAY_STOP_PLAY);
-                Log.w(TAG, "main-on-create-report-end");
-//            }
-//        };
-
 
 
 //        videoView = (VideoView)this.findViewById(R.id.video_view);
@@ -100,13 +211,3 @@ public class MainActivity extends Activity {
 ////            }
 ////            };
 
-    }
-
-    private void msSleep(long ms) {
-        try {
-            Thread.sleep(ms);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-}

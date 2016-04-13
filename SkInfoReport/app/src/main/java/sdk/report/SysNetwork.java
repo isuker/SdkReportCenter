@@ -21,6 +21,8 @@ import java.util.Enumeration;
  */
 public class SysNetwork {
     final static String TAG = "SdkReport_" + SysNetwork.class.getSimpleName();
+    final static int NET_BW_AVRY_NUM   = 3;
+
     Context activityCtx = null;
     String mLogHost = null;
     String hostIpAddr = null;
@@ -29,6 +31,13 @@ public class SysNetwork {
     long lastTimeStamp = 0;
     long appNetSndBytes = 0;
     long appNetRcvBytes = 0;
+    long appNetSndBw = 0;
+    long appNetRcvBw = 0;
+    int aryIdx = 0;
+
+    long appNetSnd3AryBw[] = new long[NET_BW_AVRY_NUM];
+    long appNetRcv3AryBw[] = new long[NET_BW_AVRY_NUM];
+
     String pingMsValue = null;
 
     public SysNetwork(Context ctx) {
@@ -82,6 +91,22 @@ public class SysNetwork {
 
     public void setAppNetRcvBytes(long appNetRcvBytes) {
         this.appNetRcvBytes = appNetRcvBytes;
+    }
+
+    public long getAppNetSndBw() {
+        return appNetSndBw;
+    }
+
+    public void setAppNetSndBw(long appNetSndBw) {
+        this.appNetSndBw = appNetSndBw;
+    }
+
+    public long getAppNetRcvBw() {
+        return appNetRcvBw;
+    }
+
+    public void setAppNetRcvBw(long appNetRcvBw) {
+        this.appNetRcvBw = appNetRcvBw;
     }
 
     public String getPingMs(String urlDomain) {
@@ -192,52 +217,37 @@ public class SysNetwork {
         return TrafficStats.getUidRxBytes(activityCtx.getApplicationInfo().uid) == TrafficStats.UNSUPPORTED ? 0 : (TrafficStats.getTotalRxBytes() / 1024);
     }
 
-    public void showNetSpeed() {
+    private long caluNetBw(long table[])
+    {
+        int id;
+        long sum=0;
+        for (id = 0; id < NET_BW_AVRY_NUM; id++)
+        {
+            sum += table[id];
+        }
+        return sum;
+    }
 
-        long nowTotalRxBytes = getTotalRxBytes();
-        long nowTimeStamp = System.currentTimeMillis();
-        long speed = ((nowTotalRxBytes - lastTotalRxBytes) * 1000 / (nowTimeStamp - lastTimeStamp));
-
-        lastTimeStamp = nowTimeStamp;
-        lastTotalRxBytes = nowTotalRxBytes;
-
-        String strSpd = String.valueOf(speed) + " kb/s";
-        Log.w(TAG, "speed..........：" + strSpd);
-
-        long mobileTxPkt = TrafficStats.getMobileTxPackets();
-        long mobileRxPkt = TrafficStats.getMobileRxPackets();
-
-        long mobileTxBys = TrafficStats.getMobileTxBytes();
-        long mobileRxBys = TrafficStats.getMobileRxBytes();
-
-        long totalTxPkt = TrafficStats.getTotalTxPackets();
-        long totalRxPkt = TrafficStats.getTotalRxPackets();
-
-        long totalTxBys = TrafficStats.getTotalTxBytes();
-        long totalRxBys = TrafficStats.getTotalRxBytes();
-
+    public void appNetBindWidth() {
         long uidTxBys = TrafficStats.getUidTxBytes(activityCtx.getApplicationInfo().uid);
         long uidRxBys = TrafficStats.getUidRxBytes(activityCtx.getApplicationInfo().uid);
+
+        long appSndBw = (uidTxBys-appNetSndBytes)*8;
+        long appRcvBw = (uidRxBys-appNetRcvBytes)*8;
+
+        int curId = aryIdx % NET_BW_AVRY_NUM;
+        appNetSnd3AryBw[curId]=appSndBw;
+        appNetRcv3AryBw[curId]=appRcvBw;
+
+        appNetSndBw = caluNetBw(appNetSnd3AryBw)/NET_BW_AVRY_NUM;
+        appNetRcvBw = caluNetBw(appNetRcv3AryBw)/NET_BW_AVRY_NUM;
+
+        aryIdx++;
+
+//        Log.w(TAG, "uidTxBys-Bw(bits).......：" + appSndBw+", aver3:"+appNetSndBw+", (Bytes):"+appSndBw/8+", aver3:"+appNetSndBw/8);
+//        Log.w(TAG, "uidRxBys-Bw(bits).......：" + appRcvBw+", aver3:"+appNetRcvBw+", (Bytes):"+appRcvBw/8+", aver3:"+appNetRcvBw/8);
         appNetSndBytes = uidTxBys;
         appNetRcvBytes = uidRxBys;
-
-        long uidTxPkt = TrafficStats.getUidTxPackets(activityCtx.getApplicationInfo().uid);
-        long uidRxPkt = TrafficStats.getUidRxPackets(activityCtx.getApplicationInfo().uid);
-
-        Log.w(TAG, "mobileTxPkt..........：" + mobileTxPkt);
-        Log.w(TAG, "mobileRxPkt..........：" + mobileRxPkt);
-        Log.w(TAG, "mobileTxBys..........：" + mobileTxBys);
-        Log.w(TAG, "mobileRxBys..........：" + mobileRxBys);
-
-        Log.w(TAG, "totalTxPkt...........：" + totalTxPkt);
-        Log.w(TAG, "totalRxPkt...........：" + totalRxPkt);
-        Log.w(TAG, "totalTxBys...........：" + totalTxBys);
-        Log.w(TAG, "totalRxBys...........：" + totalRxBys);
-
-        Log.w(TAG, "uidTxBys.............：" + uidTxBys);
-        Log.w(TAG, "uidRxBys.............：" + uidRxBys);
-        Log.w(TAG, "uidTxPkt.............：" + uidTxPkt);
-        Log.w(TAG, "uidRxPkt.............：" + uidRxPkt);
     }
 
 
@@ -272,7 +282,7 @@ public class SysNetwork {
 
 
     private String pingValue(final String domain) {
-        Log.w(TAG, "run-getping-bgn");
+        Log.w(TAG, "run-getping-bgn:"+domain);
         long bgnMs = System.currentTimeMillis();
         pingMsValue=null;
 
@@ -282,7 +292,7 @@ public class SysNetwork {
                 String result = null;
                 try {
                     String ip = domain;
-                    Process p = Runtime.getRuntime().exec("ping -c 5 -i 0.2 " + ip);
+                    Process p = Runtime.getRuntime().exec("ping -c 3 -i 0.2 " + ip);
                     //Process p = Runtime.getRuntime().exec("ping -c 3 -w 100 " + ip);
                     InputStream input = p.getInputStream();
                     BufferedReader in = new BufferedReader(new InputStreamReader(input));
@@ -329,7 +339,7 @@ public class SysNetwork {
         while (null == pingMsValue) {
             msSleep(20);
             if ((System.currentTimeMillis() - bgnMs) > 2000) {
-                pingMsValue = "not";
+                pingMsValue = ">2000MS";
                 break;
             }
         }
@@ -345,9 +355,74 @@ public class SysNetwork {
             e.printStackTrace();
         }
     }
+
+
     // min/avg/max/mdev = 10.578/12.489/16.958/2.283 ms
 }
 
+
+
+//
+//    public void showNetSpeed() {
+//        long nowTotalRxBytes = getTotalRxBytes();
+//        long nowTimeStamp = System.currentTimeMillis();
+//        long speed = ((nowTotalRxBytes - lastTotalRxBytes) * 1000 / (nowTimeStamp - lastTimeStamp));
+//
+//        lastTimeStamp = nowTimeStamp;
+//        lastTotalRxBytes = nowTotalRxBytes;
+//
+//        String strSpd = String.valueOf(speed) + " kb/s";
+//        Log.w(TAG, "speed..........：" + strSpd);
+//
+//        long mobileTxPkt = TrafficStats.getMobileTxPackets();
+//        long mobileRxPkt = TrafficStats.getMobileRxPackets();
+//
+//        long mobileTxBys = TrafficStats.getMobileTxBytes();
+//        long mobileRxBys = TrafficStats.getMobileRxBytes();
+//
+//        long totalTxPkt = TrafficStats.getTotalTxPackets();
+//        long totalRxPkt = TrafficStats.getTotalRxPackets();
+//
+//        long totalTxBys = TrafficStats.getTotalTxBytes();
+//        long totalRxBys = TrafficStats.getTotalRxBytes();
+//
+//        long uidTxBys = TrafficStats.getUidTxBytes(activityCtx.getApplicationInfo().uid);
+//        long uidRxBys = TrafficStats.getUidRxBytes(activityCtx.getApplicationInfo().uid);
+//
+//        long uidTxPkt = TrafficStats.getUidTxPackets(activityCtx.getApplicationInfo().uid);
+//        long uidRxPkt = TrafficStats.getUidRxPackets(activityCtx.getApplicationInfo().uid);
+//
+//
+//        long appSndBw = (uidTxBys-appNetSndBytes)*8;
+//        long appRcvBw = (uidRxBys-appNetRcvBytes)*8;
+//
+//        int curId = aryIdx % NET_BW_AVRY_NUM;
+//        appNetSnd3AryBw[curId]=appSndBw;
+//        appNetRcv3AryBw[curId]=appRcvBw;
+//
+//        appNetSndBw = caluNetBw(appNetSnd3AryBw)/NET_BW_AVRY_NUM;
+//        appNetRcvBw = caluNetBw(appNetRcv3AryBw)/NET_BW_AVRY_NUM;
+//
+//        aryIdx++;
+//        Log.w(TAG, "mobileTxPkt..........：" + mobileTxPkt);
+//        Log.w(TAG, "mobileRxPkt..........：" + mobileRxPkt);
+//        Log.w(TAG, "mobileTxBys..........：" + mobileTxBys);
+//        Log.w(TAG, "mobileRxBys..........：" + mobileRxBys);
+//
+//        Log.w(TAG, "totalTxPkt...........：" + totalTxPkt);
+//        Log.w(TAG, "totalRxPkt...........：" + totalRxPkt);
+//        Log.w(TAG, "totalTxBys...........：" + totalTxBys);
+//        Log.w(TAG, "totalRxBys...........：" + totalRxBys);
+//
+//        Log.w(TAG, "uidTxBys................：" + uidTxBys);
+//        Log.w(TAG, "uidRxBys................：" + uidRxBys);
+//        Log.w(TAG, "uidTxBys-Bw(bits).......：" + appSndBw+", aver3"+appNetSndBw+", (Bytes):"+appSndBw/8+", aver3:"+appNetSndBw/8);
+//        Log.w(TAG, "uidRxBys-Bw(bits).......：" + appRcvBw+", aver3"+appNetRcvBw+", (Bytes):"+appRcvBw/8+", aver3:"+appNetRcvBw/8);
+//        Log.w(TAG, "uidTxPkt.............：" + uidTxPkt);
+//        Log.w(TAG, "uidRxPkt.............：" + uidRxPkt);
+//        appNetSndBytes = uidTxBys;
+//        appNetRcvBytes = uidRxBys;
+//    }
 
 //            Process localProcess = null;
 //            try {

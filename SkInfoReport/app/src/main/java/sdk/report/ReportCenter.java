@@ -1,10 +1,6 @@
 package sdk.report;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
-import android.os.Message;
 import android.util.Log;
 
 import org.json.JSONException;
@@ -31,23 +27,26 @@ public class ReportCenter {
     public static final int SDK_REPORT_PLAY_FAIL = 70;
     public static final int SDK_REPORT_PLAY_STOP_PLAY = 88;
     //==============================================================================================
-    Context activityCtx;
-    TagHeader playHeader = null;
+    private Context activityCtx;
+    private TagHeader playHeader = null;
 
-    TagStartPlay startPlay = null;
-    TagVideoFirstFrame vidFirstFrame = null;
-    TagVideoFirstDisplay vidFirstDisplay = null;
-    TagPlayHeartBeat heartBeat = null;
-    TagPauseBegin pauseBegin = null;
-    TagPauseEnd pauseEnd = null;
-    TagPlayFail playFail = null;
-    TagStopPlay stopPlay = null;
-    SystemInfo sysInfo = null;
-    SocketManager socketHandle = null;
-    playHeartBeatThread hbThread = null;
-    long startPlayMs = 0;
-    boolean playerRun = false;
-    int heartBeatInterval = SDK_REPORT_HEART_BEAT_DEFAULT_INTERVAL;
+    private TagStartPlay startPlay = null;
+    private TagVideoFirstFrame vidFirstFrame = null;
+    private TagVideoFirstDisplay vidFirstDisplay = null;
+    private TagPlayHeartBeat heartBeat = null;
+    private TagPauseBegin pauseBegin = null;
+    private TagPauseEnd pauseEnd = null;
+    private TagPlayFail playFail = null;
+    private TagStopPlay stopPlay = null;
+    private SystemInfo sysInfo = null;
+    private SocketManager socketHandle = null;
+    private playHeartBeatThread hbThread = null;
+    //---------------------------------------------
+    private long startPlayMs = 0;
+    private String strToken = null;
+    private String strStreamId = null;
+    private boolean playerRun = false;
+    private int heartBeatInterval = SDK_REPORT_HEART_BEAT_DEFAULT_INTERVAL;
 
     // =============================================================================================
     public ReportCenter(Context ctx) {
@@ -68,23 +67,37 @@ public class ReportCenter {
     // =============================================================================================
     public class playHeartBeatThread extends Thread {
         public void run() {
+            int count = 0;
             Log.w(TAG, "thread-play-heartbeat-run");
             while (true) {
                 if (!playerRun) {
                     Log.w(TAG, "thread-play-heartbeat-ext");
                     return;
                 }
+
+                long startMs = System.currentTimeMillis();
                 //Log.w(TAG, "handle-thread-play-heartbeat-bef");
-                reportData(SDK_REPORT_PLAY_HEART_BEAT);
-                sysInfo.getSysNet().showNetSpeed();
+                int runTimes = (count++ % (heartBeatInterval / 1000));
+                if (0 == runTimes) {
+                    reportData(SDK_REPORT_PLAY_HEART_BEAT, null);
+                }
+
+                sysInfo.getSysNet().appNetBindWidth();
 
                 if (!playerRun) {
                     Log.w(TAG, "thread-play-heartbeat-ext");
                     return;
                 }
 
+                long costMs = System.currentTimeMillis() - startMs;
+                if (costMs >= 1000) {
+                    continue;
+                }
+
+                long sleepMs = 1000 - costMs;
+
                 try {
-                    Thread.sleep(heartBeatInterval);
+                    Thread.sleep(sleepMs);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -104,11 +117,13 @@ public class ReportCenter {
     }
     // =============================================================================================
 
-    public void reportData(int type) {
+    public void reportData(int type, Object objSrc) {
         final int inType = type;
+        final Object objIn = objSrc;
         new Thread() {
             public void run() {
-                playHeader = new TagHeader(sysInfo, "12345", "abcdef");
+                Log.w(TAG, "report-thread:" + inType);
+                playHeader = new TagHeader(sysInfo, strStreamId, strToken);
                 JSONObject jsnHeader = playHeader.toJson();
                 JSONObject jsnTag = new JSONObject();
                 JSONObject jsnSender = new JSONObject();
@@ -116,11 +131,11 @@ public class ReportCenter {
 
                 switch (inType) {
                     case SDK_REPORT_PLAY_START_PLAY:
-                        dat = onReportStartPlay();
+                        dat = onReportStartPlay((ParamPlay) objIn);
                         break;
 
                     case SDK_REPORT_PLAY_VIDEO_FIRST_FRAME:
-                        dat = onReportVideoFirstFrame();
+                        dat = onReportVideoFirstFrame((ParamVideo) objIn);
                         break;
                     case SDK_REPORT_PLAY_VIDEO_FIRST_DISPLAY:
                         dat = onReportVideoFirstDisplay();
@@ -135,7 +150,7 @@ public class ReportCenter {
                         dat = onReportPlayPauseEnd();
                         break;
                     case SDK_REPORT_PLAY_FAIL:
-                        dat = onReportPlayFail();
+                        dat = onReportPlayFail((ParamErr) objIn);
                         break;
 
                     case SDK_REPORT_PLAY_STOP_PLAY:
@@ -143,6 +158,11 @@ public class ReportCenter {
                         break;
                     default:
                         return;
+                }
+
+                if (null == dat) {
+                    Log.w(TAG, "report-thread-get null dat, type:" + inType);
+                    return;
                 }
 
                 try {
@@ -159,7 +179,7 @@ public class ReportCenter {
                 if (needUdpSocket(inType)) {
                     //Log.w(TAG, "udp-send-start");
                     //socketHandle.udpSend(inJson);
-                   // Log.w(TAG, "udp-send-end");
+                    // Log.w(TAG, "udp-send-end");
                 } else {
                     //Log.w(TAG, "tcp-send-start");
                     //socketHandle.tcpSend(inJson);
@@ -170,22 +190,43 @@ public class ReportCenter {
     }
 
     // =============================================================================================
-    public ReportData onReportStartPlay() {
+    public ReportData onReportStartPlay(ParamPlay paraPlay) {
         if (playerRun) {
             return null;
         }
+
+        if ((paraPlay.getiHeartBeatIvt() < SDK_REPORT_HEART_BEAT_MIN_INTERVAL)
+                || (paraPlay.getiHeartBeatIvt() > SDK_REPORT_HEART_BEAT_MAX_INTERVAL)) {
+            paraPlay.setiHeartBeatIvt(SDK_REPORT_HEART_BEAT_DEFAULT_INTERVAL);
+        }
+
+        strToken = paraPlay.getStrToken();
+        strStreamId = paraPlay.getStrStreamId();
         startPlayMs = playHeader.getStartPlayTm();
+        heartBeatInterval = paraPlay.getiHeartBeatIvt();
+
+        sysInfo.setStrCdnIp(paraPlay.getStrCdnName());
+        sysInfo.setStrPlayUrl(paraPlay.getStrUrl());
+        sysInfo.setStrInternetIp(paraPlay.getStrOutIp());
+
         ReportData data = new ReportData(startPlay.toJson(), "startplay");
         playerRun = true;
         hbThread.start();
+
         return data;
     }
 
-    public ReportData onReportVideoFirstFrame() {
+    public ReportData onReportVideoFirstFrame(ParamVideo videoPara) {
         if (!playerRun) {
             return null;
         }
-        vidFirstFrame.setData(34500, 720, 1280, 20, 300 * 1000);
+
+        vidFirstFrame.setFrameSize(videoPara.getFrameSize());
+        vidFirstFrame.setResoWidth(videoPara.getWidth());
+        vidFirstFrame.setResoHeight(videoPara.getHeight());
+        vidFirstFrame.setVidFps(videoPara.getFps());
+        vidFirstFrame.setBitRates(videoPara.getBitRates());
+
         return (new ReportData(vidFirstFrame.toJson(), "videofirstframe"));
     }
 
@@ -219,10 +260,13 @@ public class ReportCenter {
         return (new ReportData(pauseEnd.toJson(), "pauseend"));
     }
 
-    public ReportData onReportPlayFail() {
+    public ReportData onReportPlayFail(ParamErr errIn) {
         if (!playerRun) {
             return null;
         }
+
+        playFail.setFailNo(errIn.getiErrNo());
+        playFail.setFailMsg(errIn.getStrErr());
         return (new ReportData(playFail.toJson(), "playfail"));
     }
 
@@ -253,21 +297,5 @@ public class ReportCenter {
         }
         return true;
     }
-
-    // =============================================================================================
-    public void initPlay(String url, String inIp, int heartBeatItv) {
-        if ((heartBeatItv < SDK_REPORT_HEART_BEAT_MIN_INTERVAL)
-                || (heartBeatItv > SDK_REPORT_HEART_BEAT_MAX_INTERVAL)) {
-            heartBeatItv = SDK_REPORT_HEART_BEAT_DEFAULT_INTERVAL;
-        }
-        heartBeatInterval = heartBeatItv;
-
-        if (null == sysInfo) {
-            sysInfo = new SystemInfo(activityCtx);
-        }
-        sysInfo.setStrPlayUrl(url);
-        sysInfo.setStrInternetIp(inIp);
-    }
-
 
 }

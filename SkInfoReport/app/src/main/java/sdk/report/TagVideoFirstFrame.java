@@ -33,6 +33,27 @@ public class TagVideoFirstFrame {
         return bitRates;
     }
 
+
+    public void setFrameSize(int frameSize) {
+        this.frameSize = frameSize;
+    }
+
+    public void setResoWidth(int resoWidth) {
+        this.resoWidth = resoWidth;
+    }
+
+    public void setResoHeight(int resoHeight) {
+        this.resoHeight = resoHeight;
+    }
+
+    public void setVidFps(int vidFps) {
+        this.vidFps = vidFps;
+    }
+
+    public void setBitRates(int bitRates) {
+        this.bitRates = bitRates;
+    }
+
     public JSONObject toJson() {
         JSONObject strCtx = new JSONObject();
         try {
@@ -47,11 +68,5 @@ public class TagVideoFirstFrame {
         return strCtx;
     }
 
-    public void setData(int frameSz, int width, int height, int fps, int bitRt) {
-        frameSize = frameSz;
-        resoWidth = width;
-        resoHeight = height;
-        vidFps = fps;
-        bitRates = bitRt;
-    }
+
 }

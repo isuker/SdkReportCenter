@@ -26,7 +26,7 @@ public class TagPlayHeartBeat {
             strCtx.put("cdnip", sysInfo.getStrCdnIp());         // get from app local, rtmp or http connect ip address - nono
             strCtx.put("playurl", sysInfo.getStrPlayUrl());      // input from app server - nono
             strCtx.put("pingms", sysInfo.getSysNet().getPingMs(sysInfo.getStrUrlDomain())); // get from app local - okok
-            strCtx.put("bindwidth", sysInfo.getSysNet().getAppNetSndBytes() * 8);            // get from app local - nono
+            strCtx.put("bindwidth", sysInfo.getSysNet().getAppNetRcvBw());            // get from app local - okok-0413
         } catch (JSONException e) {
             e.printStackTrace();
         }
