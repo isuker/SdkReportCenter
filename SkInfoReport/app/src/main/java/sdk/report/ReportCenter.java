@@ -10,26 +10,35 @@ import org.json.JSONObject;
  * Created by suker on 16-4-7.
  */
 public class ReportCenter {
-    final String TAG = "SdkReport_" + SystemInfo.class.getSimpleName(); // ReportCenter
+    final String TAG = "SdkReport_" + ReportCenter.class.getSimpleName(); // ReportCenter
     // final String TAG2 = "SdkReport_" + SystemInfo.class.getCanonicalName();　// sdk.report.ReportCenter
     // final String TAG4 = "SdkReport_" + SystemInfo.class.getName();　// sdk.report.ReportCenter
 
     final int SDK_REPORT_HEART_BEAT_MIN_INTERVAL = 1000;
     final int SDK_REPORT_HEART_BEAT_DEFAULT_INTERVAL = (30 * 1000); // 30 seconds report heartbeat
     final int SDK_REPORT_HEART_BEAT_MAX_INTERVAL = (10 * 60 * 1000);
+    //----------------------------------------------------------------------
+    public static final int SDK_REPORT_PLAY_START_PLAY = 100;
+    public static final int SDK_REPORT_PLAY_VIDEO_FIRST_FRAME = 120;
+    public static final int SDK_REPORT_PLAY_VIDEO_FIRST_DISPLAY = 130;
+    public static final int SDK_REPORT_PLAY_HEART_BEAT = 140;
+    public static final int SDK_REPORT_PLAY_PAUSE_BEGIN = 150;
+    public static final int SDK_REPORT_PLAY_PAUSE_END = 160;
+    public static final int SDK_REPORT_PLAY_FAIL = 170;
+    public static final int SDK_REPORT_PLAY_STOP_PLAY = 188;
+    //------------------------------------------------------
+    public static final int SDK_EVENT_REPORT_START_PUBLISH = 200;
+    public static final int SDK_EVENT_REPORT_PUBLISH_HEART_BEAT = 210;
+    public static final int SDK_EVENT_REPORT_STOP_PUBLISH = 288;
 
-    public static final int SDK_REPORT_PLAY_START_PLAY = 10;
-    public static final int SDK_REPORT_PLAY_VIDEO_FIRST_FRAME = 20;
-    public static final int SDK_REPORT_PLAY_VIDEO_FIRST_DISPLAY = 30;
-    public static final int SDK_REPORT_PLAY_HEART_BEAT = 40;
-    public static final int SDK_REPORT_PLAY_PAUSE_BEGIN = 50;
-    public static final int SDK_REPORT_PLAY_PAUSE_END = 60;
-    public static final int SDK_REPORT_PLAY_FAIL = 70;
-    public static final int SDK_REPORT_PLAY_STOP_PLAY = 88;
+    //-------------------------------------------------------------------------
+    public static final int REPORTER_TYPE_PLAY = 1;
+    public static final int REPORTER_TYPE_PUBLISH = 2;
+    public static final int REPORTER_TYPE_OTHER = 3;
     //==============================================================================================
     private Context activityCtx;
     private TagHeader playHeader = null;
-
+    //---------------------------------------------
     private TagStartPlay startPlay = null;
     private TagVideoFirstFrame vidFirstFrame = null;
     private TagVideoFirstDisplay vidFirstDisplay = null;
@@ -41,6 +50,7 @@ public class ReportCenter {
     private SystemInfo sysInfo = null;
     private SocketManager socketHandle = null;
     private playHeartBeatThread hbThread = null;
+    private ParamMediaInfo mediaPara = null;
     //---------------------------------------------
     private long startPlayMs = 0;
     private String strToken = null;
@@ -49,19 +59,28 @@ public class ReportCenter {
     private int heartBeatInterval = SDK_REPORT_HEART_BEAT_DEFAULT_INTERVAL;
 
     // =============================================================================================
-    public ReportCenter(Context ctx) {
+    public ReportCenter(Context ctx, int reporter) {
         activityCtx = ctx;
-        sysInfo = new SystemInfo(ctx);
+        sysInfo = new SystemInfo(ctx, reporter);
         startPlay = new TagStartPlay(sysInfo);
-        vidFirstFrame = new TagVideoFirstFrame();
+        vidFirstFrame = new TagVideoFirstFrame(this);
         vidFirstDisplay = new TagVideoFirstDisplay();
-        heartBeat = new TagPlayHeartBeat(sysInfo);
+        heartBeat = new TagPlayHeartBeat(this);
         pauseBegin = new TagPauseBegin();
         pauseEnd = new TagPauseEnd(sysInfo);
         playFail = new TagPlayFail(sysInfo);
         stopPlay = new TagStopPlay();
         socketHandle = new SocketManager();
         hbThread = new playHeartBeatThread();
+        mediaPara = new ParamMediaInfo();
+    }
+
+    public ParamMediaInfo getmediaPara() {
+        return mediaPara;
+    }
+
+    public SystemInfo getSysInfo() {
+        return sysInfo;
     }
 
     // =============================================================================================
@@ -130,18 +149,19 @@ public class ReportCenter {
                 ReportData dat = null;
 
                 switch (inType) {
+                    // ========player tag<<=========
                     case SDK_REPORT_PLAY_START_PLAY:
-                        dat = onReportStartPlay((ParamPlay) objIn);
+                        dat = onReportStartPlay((ParamPlay) objIn, "startplay");
                         break;
 
                     case SDK_REPORT_PLAY_VIDEO_FIRST_FRAME:
-                        dat = onReportVideoFirstFrame((ParamVideo) objIn);
+                        dat = onReportVideoFirstFrame((ParamMediaInfo) objIn);
                         break;
                     case SDK_REPORT_PLAY_VIDEO_FIRST_DISPLAY:
                         dat = onReportVideoFirstDisplay();
                         break;
                     case SDK_REPORT_PLAY_HEART_BEAT:
-                        dat = onReportPlayHeartBeat();
+                        dat = onReportPlayHeartBeat("playheartbeat");
                         break;
                     case SDK_REPORT_PLAY_PAUSE_BEGIN:
                         dat = onReportPlayPauseBegin();
@@ -154,8 +174,22 @@ public class ReportCenter {
                         break;
 
                     case SDK_REPORT_PLAY_STOP_PLAY:
-                        dat = onReportStopPlay();
+                        dat = onReportStopPlay("stopplay");
                         break;
+                    // ========player tag>>=========
+
+                    // ========publisher tag<<=========
+                    case SDK_EVENT_REPORT_START_PUBLISH:
+                        dat = onReportStartPlay((ParamPlay) objIn, "publishstart");
+                        break;
+                    case SDK_EVENT_REPORT_PUBLISH_HEART_BEAT:
+                        dat = onReportPlayHeartBeat("publishheartbeat");
+                        break;
+                    case SDK_EVENT_REPORT_STOP_PUBLISH:
+                        dat = onReportStopPlay("publishstop");
+                        break;
+                    // ========publisher tag<<=========
+
                     default:
                         return;
                 }
@@ -189,8 +223,11 @@ public class ReportCenter {
         }.start();
     }
 
+    public void setMediaInfo(ParamMediaInfo paraMedia) {
+        mediaPara = paraMedia;
+    }
     // =============================================================================================
-    public ReportData onReportStartPlay(ParamPlay paraPlay) {
+    public ReportData onReportStartPlay(ParamPlay paraPlay, String tag) {
         if (playerRun) {
             return null;
         }
@@ -209,24 +246,18 @@ public class ReportCenter {
         sysInfo.setStrPlayUrl(paraPlay.getStrUrl());
         sysInfo.setStrInternetIp(paraPlay.getStrOutIp());
 
-        ReportData data = new ReportData(startPlay.toJson(), "startplay");
+        ReportData data = new ReportData(startPlay.toJson(), tag);
         playerRun = true;
         hbThread.start();
 
         return data;
     }
 
-    public ReportData onReportVideoFirstFrame(ParamVideo videoPara) {
+    public ReportData onReportVideoFirstFrame(ParamMediaInfo paraMedia) {
         if (!playerRun) {
             return null;
         }
-
-        vidFirstFrame.setFrameSize(videoPara.getFrameSize());
-        vidFirstFrame.setResoWidth(videoPara.getWidth());
-        vidFirstFrame.setResoHeight(videoPara.getHeight());
-        vidFirstFrame.setVidFps(videoPara.getFps());
-        vidFirstFrame.setBitRates(videoPara.getBitRates());
-
+        setMediaInfo(paraMedia);
         return (new ReportData(vidFirstFrame.toJson(), "videofirstframe"));
     }
 
@@ -238,11 +269,11 @@ public class ReportCenter {
         return (new ReportData(vidFirstDisplay.toJson(), "videofirstdisplay"));
     }
 
-    public ReportData onReportPlayHeartBeat() {
+    public ReportData onReportPlayHeartBeat(String tag) {
         if (!playerRun) {
             return null;
         }
-        return (new ReportData(heartBeat.toJson(), "heartbeat"));
+        return (new ReportData(heartBeat.toJson(), tag));
     }
 
     public ReportData onReportPlayPauseBegin() {
@@ -270,28 +301,67 @@ public class ReportCenter {
         return (new ReportData(playFail.toJson(), "playfail"));
     }
 
-    public ReportData onReportStopPlay() {
+    public ReportData onReportStopPlay(String tag) {
         if (!playerRun) {
             return null;
         }
         stopPlay.setCostMs(startPlayMs);
         playerRun = false;
-        return (new ReportData(stopPlay.toJson(), "stopplay"));
+        return (new ReportData(stopPlay.toJson(), tag));
+    }
+
+
+    // =============================================================================================
+    public ReportData onReportStartPublish() {
+        if (!playerRun) {
+            return null;
+        }
+        stopPlay.setCostMs(startPlayMs);
+        playerRun = false;
+        return (new ReportData(stopPlay.toJson(), "publishstart"));
+    }
+
+    public ReportData onReportPublishHeartBeat() {
+        if (!playerRun) {
+            return null;
+        }
+        return (new ReportData(heartBeat.toJson(), "publishheartbeat"));
+    }
+
+    public ReportData onReportStopPublish() {
+        if (!playerRun) {
+            return null;
+        }
+        stopPlay.setCostMs(startPlayMs);
+        playerRun = false;
+        return (new ReportData(stopPlay.toJson(), "publishstop"));
     }
 
     // =============================================================================================
     private boolean needUdpSocket(int type) {
         switch (type) {
+            // ========player tag<<=========
             case SDK_REPORT_PLAY_START_PLAY:
             case SDK_REPORT_PLAY_VIDEO_FIRST_FRAME:
             case SDK_REPORT_PLAY_VIDEO_FIRST_DISPLAY:
             case SDK_REPORT_PLAY_FAIL:
             case SDK_REPORT_PLAY_STOP_PLAY:
-                return false;
+                // ========player tag>>=========
 
+                // ========publisher tag<<=========
+            case SDK_EVENT_REPORT_START_PUBLISH:
+            case SDK_EVENT_REPORT_STOP_PUBLISH:
+                // ========publisher tag<<=========
+
+                return false;
+            // ========player tag<<=========
             case SDK_REPORT_PLAY_HEART_BEAT:
             case SDK_REPORT_PLAY_PAUSE_BEGIN:
             case SDK_REPORT_PLAY_PAUSE_END:
+                // ========player tag>>=========
+                // ========publisher tag<<=========
+            case SDK_EVENT_REPORT_PUBLISH_HEART_BEAT:
+                // ========publisher tag<<=========
             default:
                 break;
         }

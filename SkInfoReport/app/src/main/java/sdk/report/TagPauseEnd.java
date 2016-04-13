@@ -7,7 +7,7 @@ import org.json.JSONObject;
  * Created by suker on 16-4-6.
  */
 public class TagPauseEnd {
-    SystemInfo sysInfo = null;
+    private SystemInfo sysInfo = null;
 
     public TagPauseEnd(SystemInfo info) {
         sysInfo = info;

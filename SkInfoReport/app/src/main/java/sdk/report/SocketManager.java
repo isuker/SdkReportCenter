@@ -25,12 +25,12 @@ import org.apache.http.params.CoreConnectionPNames;
  * Created by suker on 16-4-11.
  */
 public class SocketManager {
-    String TAG = "SdkReport_" + SystemInfo.class.getSimpleName();
-    DatagramSocket udpSocket = null;
-    InetAddress serverAddress = null;
-    String REPORT_TCP_SERVER = "http://a.b.com/report";
-    String REPORT_UDP_SERVER = "a.b.com";
-    int REPORT_UDP_PORT = 12345;
+    private String TAG = "SdkReport_" + SocketManager.class.getSimpleName();
+    private DatagramSocket udpSocket = null;
+    private InetAddress serverAddress = null;
+    private String REPORT_TCP_SERVER = "http://a.b.com/report";
+    private String REPORT_UDP_SERVER = "a.b.com";
+    private int REPORT_UDP_PORT = 12345;
 
     public void udpSend(String data) {
         if (udpSocket == null) {

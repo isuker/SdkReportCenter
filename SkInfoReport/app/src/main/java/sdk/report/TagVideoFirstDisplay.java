@@ -7,7 +7,7 @@ import org.json.JSONObject;
  * Created by suker on 16-4-6.
  */
 public class TagVideoFirstDisplay {
-    long firstDisplayCostMs;
+    private long firstDisplayCostMs;
 
     public long getFirstDisplayCostMs() {
         return firstDisplayCostMs;

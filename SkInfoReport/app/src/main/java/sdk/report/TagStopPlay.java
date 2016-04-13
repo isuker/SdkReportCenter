@@ -7,7 +7,7 @@ import org.json.JSONObject;
  * Created by suker on 16-4-6.
  */
 public class TagStopPlay {
-    long playIntervalMin;
+    private long playIntervalMin;
 
     public long getPlayIntervalMin() {
         return playIntervalMin;

@@ -3,7 +3,7 @@ package sdk.report;
 /**
  * Created by suker on 16-4-13.
  */
-public class ParamVideo {
+public class ParamMediaInfo {
     private int frameSize;
     private int width;
     private int height;

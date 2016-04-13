@@ -20,25 +20,24 @@ import java.util.Enumeration;
  * Created by suker on 16-4-9.
  */
 public class SysNetwork {
-    final static String TAG = "SdkReport_" + SysNetwork.class.getSimpleName();
-    final static int NET_BW_AVRY_NUM   = 3;
+    private final static String TAG = "SdkReport_" + SysNetwork.class.getSimpleName();
+    private final static int NET_BW_AVRY_NUM   = 3;
 
-    Context activityCtx = null;
-    String mLogHost = null;
-    String hostIpAddr = null;
+    private Context activityCtx = null;
+    private String mLogHost = null;
+    private String hostIpAddr = null;
 
-    long lastTotalRxBytes = 0;
-    long lastTimeStamp = 0;
-    long appNetSndBytes = 0;
-    long appNetRcvBytes = 0;
-    long appNetSndBw = 0;
-    long appNetRcvBw = 0;
-    int aryIdx = 0;
+    private long lastTotalRxBytes = 0;
+    private long lastTimeStamp = 0;
+    private long appNetSndBytes = 0;
+    private long appNetRcvBytes = 0;
+    private long appNetSndBw = 0;
+    private long appNetRcvBw = 0;
+    private int aryIdx = 0;
 
-    long appNetSnd3AryBw[] = new long[NET_BW_AVRY_NUM];
-    long appNetRcv3AryBw[] = new long[NET_BW_AVRY_NUM];
-
-    String pingMsValue = null;
+    private long appNetSnd3AryBw[] = new long[NET_BW_AVRY_NUM];
+    private long appNetRcv3AryBw[] = new long[NET_BW_AVRY_NUM];
+    private String pingMsValue = null;
 
     public SysNetwork(Context ctx) {
         activityCtx = ctx;

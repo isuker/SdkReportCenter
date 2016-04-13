@@ -7,61 +7,21 @@ import org.json.JSONObject;
  * Created by suker on 16-4-6.
  */
 public class TagVideoFirstFrame {
-    int frameSize;
-    int resoWidth;
-    int resoHeight;
-    int vidFps;
-    int bitRates;
+    private ReportCenter rcCtx = null;
 
-    public int getFrameSize() {
-        return frameSize;
-    }
-
-    public int getResoWidth() {
-        return resoWidth;
-    }
-
-    public int getResoHeight() {
-        return resoHeight;
-    }
-
-    public int getVidFps() {
-        return vidFps;
-    }
-
-    public int getBitRates() {
-        return bitRates;
-    }
-
-
-    public void setFrameSize(int frameSize) {
-        this.frameSize = frameSize;
-    }
-
-    public void setResoWidth(int resoWidth) {
-        this.resoWidth = resoWidth;
-    }
-
-    public void setResoHeight(int resoHeight) {
-        this.resoHeight = resoHeight;
-    }
-
-    public void setVidFps(int vidFps) {
-        this.vidFps = vidFps;
-    }
-
-    public void setBitRates(int bitRates) {
-        this.bitRates = bitRates;
+    public TagVideoFirstFrame(ReportCenter rc) {
+        rcCtx = rc;
     }
 
     public JSONObject toJson() {
         JSONObject strCtx = new JSONObject();
+        ParamMediaInfo mediaIf = rcCtx.getmediaPara();
         try {
-            strCtx.put("framesize", getFrameSize());  // get from app local - nono
-            strCtx.put("width", getResoWidth());      // get from app local - nono
-            strCtx.put("height", getResoHeight());    // get from app local - nono
-            strCtx.put("fps", getVidFps());           // get from app local - nono
-            strCtx.put("bitrates", getBitRates());    // get from app local - nono
+            //strCtx.put("framesize", rcCtx.getmediaPara().getFrameSize());  // get from app local - nono
+            strCtx.put("width", mediaIf.getWidth());      // get from app local - nono
+            strCtx.put("height", mediaIf.getHeight());    // get from app local - nono
+            strCtx.put("fps", mediaIf.getFps());           // get from app local - nono
+            strCtx.put("bitrates", mediaIf.getBitRates());    // get from app local - nono
         } catch (JSONException e) {
             e.printStackTrace();
         }

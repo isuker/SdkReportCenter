@@ -10,8 +10,8 @@ import android.widget.VideoView;
 import java.io.IOException;
 
 import sdk.report.ParamErr;
+import sdk.report.ParamMediaInfo;
 import sdk.report.ParamPlay;
-import sdk.report.ParamVideo;
 import sdk.report.ReportCenter;
 
 public class MainActivity extends Activity {
@@ -32,7 +32,7 @@ public class MainActivity extends Activity {
         mContext = this;
 
         Log.w(TAG, "main-on-create-report-start");
-        playerReportPlay();
+        playerReportPlay(ReportCenter.REPORTER_TYPE_PLAY);
         msSleep(100);
         playerReportFirstDisplay();
         msSleep(100);
@@ -62,7 +62,7 @@ public class MainActivity extends Activity {
             }
         }
 //                msSleep(40 * 1000);
-        playerReportStop();
+        playerReportStop(ReportCenter.REPORTER_TYPE_PLAY);
 
         Log.w(TAG, "main-on-create-report-end");
 
@@ -100,22 +100,31 @@ public class MainActivity extends Activity {
     }
 
     //==suker-2016-0412 add player report >>==========================================================
+    public void setReportHbMs(int setMs) {
+        playerReportHbMs = setMs;
+    }
     ReportCenter playerReportCtx = null;
+    String playerOriUrl = playUrl;
+    String playerStreamIdx = "1234";
+    int playerReportHbMs = 30 * 1000;
 
-    private void playerReportPlay() {
+    private void playerReportPlay(int reporter) {
         if (null == playerReportCtx) {
-            playerReportCtx = new ReportCenter(mContext);
+            playerReportCtx = new ReportCenter(mContext, reporter);
         }
 
         ParamPlay paraPlay = new ParamPlay();
-        paraPlay.setStrUrl(token);
+        paraPlay.setStrUrl(playerOriUrl);
         paraPlay.setStrToken(token);
-        paraPlay.setStrStreamId("1234");
+        paraPlay.setStrStreamId(playerStreamIdx);
         paraPlay.setStrOutIp(getRemoteIpAddress());
         paraPlay.setStrCdnName(getCdnName());
-        paraPlay.setiHeartBeatIvt(3 * 1000);
-
-        playerReportCtx.reportData(ReportCenter.SDK_REPORT_PLAY_START_PLAY, paraPlay);
+        paraPlay.setiHeartBeatIvt(playerReportHbMs);
+        int reportMsg = ReportCenter.SDK_REPORT_PLAY_START_PLAY;
+        if (ReportCenter.REPORTER_TYPE_PUBLISH == reporter) {
+            reportMsg = ReportCenter.SDK_EVENT_REPORT_START_PUBLISH;
+        }
+        playerReportCtx.reportData(reportMsg, paraPlay);
     }
 
     private void playerReportFirstFrame() {
@@ -123,7 +132,7 @@ public class MainActivity extends Activity {
             return;
         }
 
-        ParamVideo paraVid = new ParamVideo();
+        ParamMediaInfo paraVid = new ParamMediaInfo();
         paraVid.setFrameSize(128000);
         paraVid.setWidth(getVideoWidth());
         paraVid.setHeight(getVideoHeight());
@@ -165,11 +174,15 @@ public class MainActivity extends Activity {
 
     }
 
-    private void playerReportStop() {
+    private void playerReportStop(int reporter) {
         if (null == playerReportCtx) {
             return;
         }
-        playerReportCtx.reportData(ReportCenter.SDK_REPORT_PLAY_STOP_PLAY, null);
+        int reportMsg = ReportCenter.SDK_REPORT_PLAY_STOP_PLAY;
+        if (ReportCenter.REPORTER_TYPE_PUBLISH == reporter) {
+            reportMsg = ReportCenter.SDK_EVENT_REPORT_STOP_PUBLISH;
+        }
+        playerReportCtx.reportData(reportMsg, null);
     }
 
     private void msSleep(long ms) {

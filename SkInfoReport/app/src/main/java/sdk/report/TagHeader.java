@@ -9,11 +9,11 @@ import org.json.JSONObject;
  * Created by suker on 16-4-6.
  */
 public class TagHeader {
-    SystemInfo sysInfo = null;
-    String strImei;
-    String strStreamId;
-    String strToken;
-    long startPlayTm; // ms
+    private SystemInfo sysInfo = null;
+    private String strImei;
+    private String strStreamId;
+    private String strToken;
+    private long startPlayTm; // ms
 
     TagHeader(SystemInfo sysIf, String streamId, String token) {
         sysInfo = sysIf;

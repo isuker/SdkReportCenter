@@ -25,21 +25,23 @@ import java.net.UnknownHostException;
  * Created by suker on 16-4-6.
  */
 public class SystemInfo {
-    String TAG = "SdkReport_" + SystemInfo.class.getSimpleName();
-    static final int SYS_CPU = 1;
-    static final int SYS_MEM = 2;
-    static final String MEM_VM_RSS = "VmRSS";
+    private String TAG = "SdkReport_" + SystemInfo.class.getSimpleName();
+    private static final int SYS_CPU = 1;
+    private static final int SYS_MEM = 2;
+    private static final String MEM_VM_RSS = "VmRSS";
+
     //==============================================================================================
-    Context activityCtx = null;
-    SysNetwork sysNet = null;
+    private Context activityCtx = null;
+    private SysNetwork sysNet = null;
     //==============================================================================================
-    String strInternetIp = null; // input from app server, net out ip address
-    String strDnsIp = null;      // get from app local, current device used dns ip address
-    String strCdnIp = null;      // get from app local, rtmp or http connect ip address
-    String strPlayUrl = null;    // input from app server
-    String strUrlDomain = null;
-    String strPkgName = null;    // get from app loca
-    long mLogMaxMemSize = 0;
+    private String strInternetIp = null; // input from app server, net out ip address
+    private String strDnsIp = null;      // get from app local, current device used dns ip address
+    private String strCdnIp = null;      // get from app local, rtmp or http connect ip address
+    private String strPlayUrl = null;    // input from app server
+    private String strUrlDomain = null;
+    private String strPkgName = null;    // get from app loca
+    private long mLogMaxMemSize = 0;
+    private int reporterType = ReportCenter.REPORTER_TYPE_PLAY; // 1: client, 2:server
 
     public SysNetwork getSysNet() {
         return sysNet;
@@ -124,6 +126,14 @@ public class SystemInfo {
         Log.i(TAG, "+++++++++++++++++++++++domain-name:" + urlDomain);
         this.strUrlDomain = urlDomain;
     }
+
+    public int getReporterType() {
+        return reporterType;
+    }
+
+    public void setReporterType(int reporterType) {
+        this.reporterType = reporterType;
+    }
     //==============================================================================================
 
     class CpuTopPara {
@@ -132,8 +142,9 @@ public class SystemInfo {
         String progressName;
     }
 
-    public SystemInfo(Context ctx) {
+    public SystemInfo(Context ctx, int reporter) {
         activityCtx = ctx;
+        reporterType = reporter;
         sysNet = new SysNetwork(ctx);
     }
 

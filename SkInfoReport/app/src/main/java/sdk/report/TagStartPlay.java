@@ -11,9 +11,9 @@ import org.json.JSONObject;
  * Created by suker on 16-4-6.
  */
 public class TagStartPlay {
-    String strAppVerName;
-    String strAppVerCode;
-    SystemInfo sysInfo = null;
+    private String strAppVerName;
+    private String strAppVerCode;
+    private SystemInfo sysInfo = null;
     //==============================================================================================
 
     public TagStartPlay(SystemInfo sys) {
@@ -70,7 +70,7 @@ public class TagStartPlay {
     public JSONObject toJson() {
         JSONObject strCtx = new JSONObject();
         try {
-            Log.w("SdkReport_test", "dns-ip:"+sysInfo.getStrDnsIp());
+            Log.w("SdkReport_test", "dns-ip:" + sysInfo.getStrDnsIp());
             strCtx.put("pkgname", sysInfo.getStrPkgName());  // get from app local - okok
             strCtx.put("internetip", sysInfo.getStrInternetIp());// input from app server, net out ip address - nono
             strCtx.put("dnsip", sysInfo.getStrDnsIp());      // get from app local, current device used dns ip address - okok
@@ -86,6 +86,11 @@ public class TagStartPlay {
             strCtx.put("appvercode", getStrAppVerCode());    // get from app local - okok
             strCtx.put("playurl", sysInfo.getStrPlayUrl());  // input from app server - nono
             strCtx.put("platform", getStrPlatform());        // get from app local - okok
+
+            if (ReportCenter.REPORTER_TYPE_PUBLISH == sysInfo.getReporterType()) {
+                strCtx.put("publisher", "hupu");     // get from app local - nono
+                strCtx.put("defaultfps", 25);        // get from app local - nono
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
