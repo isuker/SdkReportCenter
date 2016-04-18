@@ -8,6 +8,8 @@ import android.os.Environment;
 import android.os.StatFs;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,27 +34,22 @@ public class SystemInfo {
 
     //==============================================================================================
     private Context activityCtx = null;
+    private ReportCenter rcCtx = null;
     private SysNetwork sysNet = null;
     //==============================================================================================
-    private String strInternetIp = null; // input from app server, net out ip address
     private String strDnsIp = null;      // get from app local, current device used dns ip address
-    private String strCdnIp = null;      // get from app local, rtmp or http connect ip address
-    private String strPlayUrl = null;    // input from app server
-    private String strUrlDomain = null;
-    private String strPkgName = null;    // get from app loca
+    private String strAppName = null;    // get from app local
+    private String strPkgName = null;    // get from app local
     private long mLogMaxMemSize = 0;
-    private int reporterType = ReportCenter.REPORTER_TYPE_PLAY; // 1: client, 2:server
+
+    public SystemInfo(Context ctx, ReportCenter rc) {
+        activityCtx = ctx;
+        rcCtx = rc;
+        sysNet = new SysNetwork(ctx, rc);
+    }
 
     public SysNetwork getSysNet() {
         return sysNet;
-    }
-
-    public String getStrInternetIp() {
-        return strInternetIp;
-    }
-
-    public void setStrInternetIp(String strInternetIp) {
-        this.strInternetIp = strInternetIp;
     }
 
     public String getStrDnsIp() {
@@ -69,37 +66,16 @@ public class SystemInfo {
         this.strDnsIp = strDnsIp;
     }
 
-    public String getStrCdnIp() {
-        return strCdnIp;
-    }
-
-    public void setStrCdnIp(String strCdnIp) {
-        this.strCdnIp = strCdnIp;
-    }
-
-    public String getStrPlayUrl() {
-        return strPlayUrl;
-    }
-
-    public void setStrPlayUrl(String strPlayUrl) {
-        this.strPlayUrl = strPlayUrl;
-        String domainStart = null;
-        //Log.i(TAG, "+++++++++++++++++++++++set-play-url:" + strPlayUrl);
-        int hdrPos = strPlayUrl.indexOf("://");
-        //int hdrPos = strPlayUrl.indexOf("%3A%2F%2F");
-        int endPos = 0;
-        if (-1 == hdrPos) {
-            return;
+    public String getStrAppName() {
+        if (null == strAppName) {
+            if (null == activityCtx) {
+                return null;
+            }
+            PackageManager pm = activityCtx.getPackageManager();
+            strAppName = activityCtx.getApplicationInfo().loadLabel(pm).toString();
         }
-        Log.i(TAG, "+++++++++++++++++++++++domain-start:" + hdrPos);
-        domainStart = strPlayUrl.substring(hdrPos + 3);
-        endPos = domainStart.indexOf("/");
-        //endPos = domainStart.indexOf("%2F");
-        if (-1 != endPos) {
-            setStrUrlDomain(domainStart.substring(0, endPos));
-        }
+        return strAppName;
     }
-
 
     public String getStrPkgName() {
         if (null == strPkgName) {
@@ -118,22 +94,6 @@ public class SystemInfo {
         return bupt.getHostAddress();
     }
 
-    public String getStrUrlDomain() {
-        return strUrlDomain;
-    }
-
-    public void setStrUrlDomain(String urlDomain) {
-        Log.i(TAG, "+++++++++++++++++++++++domain-name:" + urlDomain);
-        this.strUrlDomain = urlDomain;
-    }
-
-    public int getReporterType() {
-        return reporterType;
-    }
-
-    public void setReporterType(int reporterType) {
-        this.reporterType = reporterType;
-    }
     //==============================================================================================
 
     class CpuTopPara {
@@ -142,11 +102,6 @@ public class SystemInfo {
         String progressName;
     }
 
-    public SystemInfo(Context ctx, int reporter) {
-        activityCtx = ctx;
-        reporterType = reporter;
-        sysNet = new SysNetwork(ctx);
-    }
 
     public String getSysImei() {
         if (null == activityCtx) {
@@ -191,13 +146,16 @@ public class SystemInfo {
                 Log.w(TAG, "maxmem:" + maxDat.memRss + ", total:" + maxMemKb + ", bytes:" + mLogMaxMemSize + ", value:" + value);
             }
         }
-
+//        "selfpercent": "40%",
+//        "maxpercent": "40%",
+//        "maxname": "com.xxx.xxx",
+//        "totalpercent":" 70%"
         try {
-            cpuValue.put("selfpencent", usage.appUsage);
-            cpuValue.put("selfvalue", usage.appValue);
-            cpuValue.put("totalpencent", usage.totalUsage);
-            cpuValue.put("maxpencent", value);
+            cpuValue.put("selfpercent", String.valueOf(usage.appUsage) + "%");
+//            cpuValue.put("selfvalue", usage.appValue);
+            cpuValue.put("maxpercent", String.valueOf(value) + "%");
             cpuValue.put("maxname", maxDat.progressName);
+            cpuValue.put("totalpercent", String.valueOf(usage.totalUsage) + "%");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -333,10 +291,7 @@ public class SystemInfo {
         CpuTimeSt totalCpuTm1 = getTotalCpuTime();
         float processCpuTime1 = getAppCpuTime();
 
-        try {
-            Thread.sleep(360);
-        } catch (Exception e) {
-        }
+        rcCtx.msSleep(350);
 
         CpuMemUsage cpuUsage = new CpuMemUsage();
         CpuTimeSt totalCpuTm2 = getTotalCpuTime();

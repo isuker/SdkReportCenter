@@ -7,7 +7,7 @@ import org.json.JSONObject;
  */
 public class TagPauseBegin {
     public JSONObject toJson() {
-        JSONObject strHdr = new JSONObject();
+        JSONObject jsnObj = new JSONObject();
 //        try {
 //            strHdr.put("imei", getStrImei());
 //            strHdr.put("streamid", getStrStreamId());
@@ -16,6 +16,6 @@ public class TagPauseBegin {
 //        } catch (JSONException e) {
 //            e.printStackTrace();
 //        }
-        return strHdr;
+        return jsnObj;
     }
 }

@@ -21,9 +21,10 @@ import java.util.Enumeration;
  */
 public class SysNetwork {
     private final static String TAG = "SdkReport_" + SysNetwork.class.getSimpleName();
-    private final static int NET_BW_AVRY_NUM   = 3;
+    private final static int NET_BW_AVRY_NUM = 3;
 
     private Context activityCtx = null;
+    private ReportCenter rcCtx = null;
     private String mLogHost = null;
     private String hostIpAddr = null;
 
@@ -37,10 +38,11 @@ public class SysNetwork {
 
     private long appNetSnd3AryBw[] = new long[NET_BW_AVRY_NUM];
     private long appNetRcv3AryBw[] = new long[NET_BW_AVRY_NUM];
-    private String pingMsValue = null;
+    private int pingMsValue = 0;
 
-    public SysNetwork(Context ctx) {
+    public SysNetwork(Context ctx, ReportCenter rc) {
         activityCtx = ctx;
+        rcCtx = rc;
     }
 
 
@@ -101,6 +103,9 @@ public class SysNetwork {
     }
 
     public long getAppNetRcvBw() {
+        if (appNetRcvBw > (10 << 20)) {
+            appNetRcvBw = (1 << 20);
+        }
         return appNetRcvBw;
     }
 
@@ -108,7 +113,7 @@ public class SysNetwork {
         this.appNetRcvBw = appNetRcvBw;
     }
 
-    public String getPingMs(String urlDomain) {
+    public int getPingMs(String urlDomain) {
         return pingValue(urlDomain);
     }
 
@@ -194,11 +199,7 @@ public class SysNetwork {
         Log.w(TAG, "get address wait");
         long bgnMs = System.currentTimeMillis();
         while (null == hostIpAddr) {
-            try {
-                Thread.sleep(20);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            rcCtx.msSleep(50);
             if ((System.currentTimeMillis() - bgnMs) > 2000) {
                 hostIpAddr = "1";
                 break;
@@ -216,12 +217,10 @@ public class SysNetwork {
         return TrafficStats.getUidRxBytes(activityCtx.getApplicationInfo().uid) == TrafficStats.UNSUPPORTED ? 0 : (TrafficStats.getTotalRxBytes() / 1024);
     }
 
-    private long caluNetBw(long table[])
-    {
+    private long caluNetBw(long table[]) {
         int id;
-        long sum=0;
-        for (id = 0; id < NET_BW_AVRY_NUM; id++)
-        {
+        long sum = 0;
+        for (id = 0; id < NET_BW_AVRY_NUM; id++) {
             sum += table[id];
         }
         return sum;
@@ -231,15 +230,22 @@ public class SysNetwork {
         long uidTxBys = TrafficStats.getUidTxBytes(activityCtx.getApplicationInfo().uid);
         long uidRxBys = TrafficStats.getUidRxBytes(activityCtx.getApplicationInfo().uid);
 
-        long appSndBw = (uidTxBys-appNetSndBytes)*8;
-        long appRcvBw = (uidRxBys-appNetRcvBytes)*8;
+        if (0 == appNetSndBytes) {
+            appNetSndBytes = uidTxBys;
+        }
+        if (0 == appNetRcvBytes) {
+            appNetRcvBytes = uidRxBys;
+        }
+
+        long appSndBw = (uidTxBys - appNetSndBytes) * 8;
+        long appRcvBw = (uidRxBys - appNetRcvBytes) * 8;
 
         int curId = aryIdx % NET_BW_AVRY_NUM;
-        appNetSnd3AryBw[curId]=appSndBw;
-        appNetRcv3AryBw[curId]=appRcvBw;
+        appNetSnd3AryBw[curId] = appSndBw;
+        appNetRcv3AryBw[curId] = appRcvBw;
 
-        appNetSndBw = caluNetBw(appNetSnd3AryBw)/NET_BW_AVRY_NUM;
-        appNetRcvBw = caluNetBw(appNetRcv3AryBw)/NET_BW_AVRY_NUM;
+        appNetSndBw = caluNetBw(appNetSnd3AryBw) / NET_BW_AVRY_NUM;
+        appNetRcvBw = caluNetBw(appNetRcv3AryBw) / NET_BW_AVRY_NUM;
 
         aryIdx++;
 
@@ -280,10 +286,10 @@ public class SysNetwork {
     }
 
 
-    private String pingValue(final String domain) {
-        Log.w(TAG, "run-getping-bgn:"+domain);
+    private int pingValue(final String domain) {
+        Log.w(TAG, "run-getping-bgn:" + domain);
         long bgnMs = System.currentTimeMillis();
-        pingMsValue=null;
+        pingMsValue = 99999;
 
         new Thread() {
             public void run() {
@@ -309,11 +315,12 @@ public class SysNetwork {
                         if (splitAry.length > 1) {
                             String[] itemAry = splitAry[1].split("/");
                             for (int j = 0; j < itemAry.length; j++) {
-                               // Log.i(TAG, "+++++++++++++++++++++++ping-:" + 1 + ", j:" + j + ":" + itemAry[j]);
+                                // Log.i(TAG, "+++++++++++++++++++++++ping-:" + 1 + ", j:" + j + ":" + itemAry[j]);
                             }
                             if (itemAry.length > 1) {
                                 Log.i(TAG, "+++++++++++++++++++++++ping rtt:" + content + ", aver:" + itemAry[1]);
-                                pingMsValue = itemAry[1];
+                                float fdat = Float.parseFloat(itemAry[1]);
+                                pingMsValue = (int) fdat; // itemAry[1];
                             }
                         }
                     }
@@ -335,30 +342,20 @@ public class SysNetwork {
         }.start();
         //Log.w(TAG, "run-getping-end");
         //Log.w(TAG, "get ping-value wait");
-        while (null == pingMsValue) {
-            msSleep(20);
+        while (99999 == pingMsValue) {
+            rcCtx.msSleep(50);
             if ((System.currentTimeMillis() - bgnMs) > 2000) {
-                pingMsValue = ">2000MS";
                 break;
             }
         }
-        long costMs = System.currentTimeMillis()-bgnMs;
-        Log.w(TAG, "run-getping-end:"+pingMsValue+", cost-ms:"+costMs);
+        long costMs = System.currentTimeMillis() - bgnMs;
+        Log.w(TAG, "run-getping-end:" + pingMsValue + ", cost-ms:" + costMs);
         return pingMsValue;
-    }
-
-    private void msSleep(long ms) {
-        try {
-            Thread.sleep(ms);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
 
     // min/avg/max/mdev = 10.578/12.489/16.958/2.283 ms
 }
-
 
 
 //

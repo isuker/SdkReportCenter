@@ -9,18 +9,14 @@ import org.json.JSONObject;
  * Created by suker on 16-4-6.
  */
 public class TagHeader {
+    private ReportCenter rcCtx = null;
     private SystemInfo sysInfo = null;
     private String strImei;
-    private String strStreamId;
-    private String strToken;
-    private long startPlayTm; // ms
 
-    TagHeader(SystemInfo sysIf, String streamId, String token) {
-        sysInfo = sysIf;
+    TagHeader(ReportCenter rc, String streamId, String token) {
+        rcCtx = rc;
+        sysInfo = rc.getSysInfo();
         strImei = null;
-        strStreamId = streamId;
-        strToken = token;
-        startPlayTm = System.currentTimeMillis();
     }
 
     public String getStrImei() {
@@ -30,29 +26,33 @@ public class TagHeader {
         return strImei;
     }
 
-    public String getStrStreamId() {
-        return strStreamId;
-    }
-
-    public String getStrToken() {
-        return strToken;
-    }
-
-    public long getStartPlayTm() {
-        return startPlayTm;
+    public String getStrPlatform() {
+        return "android";
     }
 
     public JSONObject toJson() {
-        JSONObject strHdr = new JSONObject();
+        JSONObject jsnObj = new JSONObject();
+
         try {
-            strHdr.put("imei", getStrImei());         // get from local - ok
-            strHdr.put("streamid", getStrStreamId()); // get from server-input - nono
-            strHdr.put("token", getStrToken());       // get from server-input - nono
-            strHdr.put("devtm", startPlayTm);         // get from local - ok
+            jsnObj.put("appName", sysInfo.getStrAppName());  // get from local - ok
+            jsnObj.put("platform", getStrPlatform());        // get from app local - okok
+            jsnObj.put("streamUrl", rcCtx.getParamPlay().getStrStreamUrl());     // get from server-input - nono
+            jsnObj.put("deviceNo", getStrImei());         // get from local - ok
+            jsnObj.put("token", rcCtx.getParamPlay().getStrToken());           // get from server-input - nono
+            jsnObj.put("bundleIdentifier", sysInfo.getStrPkgName());         // get from local - ok
+            jsnObj.put("time", System.currentTimeMillis()/1000);              // get from local - ok
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return strHdr;
+        return jsnObj;
     }
 
 }
+
+//"appName": "",           //APP名称
+//"platform": "",          //平台 ios/android
+//"time": 1460608542,      //秒时间戳
+//"streamId": "",          //流ID
+//"deviceNo": "",          //设备号
+//"token": "",             //访问token
+//"bundleIdentifier": ""   //应用绑定包名称

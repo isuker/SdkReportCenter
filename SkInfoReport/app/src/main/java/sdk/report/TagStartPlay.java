@@ -13,11 +13,11 @@ import org.json.JSONObject;
 public class TagStartPlay {
     private String strAppVerName;
     private String strAppVerCode;
-    private SystemInfo sysInfo = null;
+    private ReportCenter rcCtx = null;
     //==============================================================================================
 
-    public TagStartPlay(SystemInfo sys) {
-        sysInfo = sys;
+    public TagStartPlay(ReportCenter rc) {
+        rcCtx = rc;
     }
 
     public String getStrManufacturer() {
@@ -50,51 +50,50 @@ public class TagStartPlay {
 
     public String getStrAppVerName() {
         if (null == strAppVerCode) {
-            strAppVerCode = sysInfo.getAppVerName();
+            strAppVerCode = rcCtx.getSysInfo().getAppVerName();
         }
         return strAppVerCode;
     }
 
     public String getStrAppVerCode() {
         if (null == strAppVerName) {
-            strAppVerName = sysInfo.getAppVerCode();
+            strAppVerName = rcCtx.getSysInfo().getAppVerCode();
         }
         return strAppVerName;
     }
 
-    public String getStrPlatform() {
-        return "android";
-    }
-
 
     public JSONObject toJson() {
-        JSONObject strCtx = new JSONObject();
+        JSONObject jsnObj = new JSONObject();
+        SystemInfo sysInfo = rcCtx.getSysInfo();
+        ParamPlay playIf = rcCtx.getParamPlay();
+        String usrOptTag = "playUrl";
+
         try {
             Log.w("SdkReport_test", "dns-ip:" + sysInfo.getStrDnsIp());
-            strCtx.put("pkgname", sysInfo.getStrPkgName());  // get from app local - okok
-            strCtx.put("internetip", sysInfo.getStrInternetIp());// input from app server, net out ip address - nono
-            strCtx.put("dnsip", sysInfo.getStrDnsIp());      // get from app local, current device used dns ip address - okok
-            strCtx.put("cdnip", sysInfo.getStrCdnIp());      // get from app local, rtmp or http connect ip address - nono
-            strCtx.put("manufacturer", getStrManufacturer());// get from app local - okok
-            strCtx.put("model", getStrModel());              // get from app local - okok
-            strCtx.put("product", getStrProduct());          // get from app local - okok
-            strCtx.put("board", getStrBoard());              // get from app local - okok
-            strCtx.put("cpuarch", getStrCpuArch());          // get from app local - okok
-            strCtx.put("osver", getStrOsVer());              // get from app local - okok
-            strCtx.put("sdkver", getStrSdkVer());            // get from app local - okok
-            strCtx.put("appvername", getStrAppVerName());    // get from app local - okok
-            strCtx.put("appvercode", getStrAppVerCode());    // get from app local - okok
-            strCtx.put("playurl", sysInfo.getStrPlayUrl());  // input from app server - nono
-            strCtx.put("platform", getStrPlatform());        // get from app local - okok
 
-            if (ReportCenter.REPORTER_TYPE_PUBLISH == sysInfo.getReporterType()) {
-                strCtx.put("publisher", "hupu");     // get from app local - nono
-                strCtx.put("defaultfps", 25);        // get from app local - nono
+            jsnObj.put("product", getStrProduct());          // get from app local - okok
+            jsnObj.put("model", getStrModel());              // get from app local - okok
+            jsnObj.put("osVersion", getStrOsVer());              // get from app local - okok
+            jsnObj.put("manufacturer", getStrManufacturer());// get from app local - okok
+            jsnObj.put("cpuarch", getStrCpuArch());          // get from app local - okok
+            jsnObj.put("cdnIp", playIf.getStrCdnIp());      // get from app local, rtmp or http connect ip address - nono
+            jsnObj.put("dnsIp", sysInfo.getStrDnsIp());      // get from app local, current device used dns ip address - okok
+            jsnObj.put("board", getStrBoard());              // get from app local - okok
+            jsnObj.put("internetIp", playIf.getStrOutIp());// input from app server, net out ip address - nono
+            jsnObj.put("sdkVersion", getStrSdkVer());            // get from app local - okok
+            jsnObj.put("appVersion", getStrAppVerName() + "__" + getStrAppVerCode());    // get from app local - okok
+
+            if (ReportCenter.SDK_REPORTER_TYPE_PUBLISH == rcCtx.getReporterType()) {
+                usrOptTag = "pushUrl";
+                jsnObj.put("pushName", "hupu");     // get from app local - nono
+                jsnObj.put("defaultfps", 25);        // get from app local - nono
             }
+            jsnObj.put(usrOptTag, playIf.getStrUrl());  // input from app server - nono
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return strCtx;
+        return jsnObj;
     }
 
 }

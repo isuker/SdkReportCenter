@@ -19,30 +19,34 @@ public class TagPlayHeartBeat {
     public JSONObject toJson() {
 //        Log.w(TAG, "----run");
         SystemInfo sysInfo = rcCtx.getSysInfo();
+        ParamPlay playIf = rcCtx.getParamPlay();
         ParamMediaInfo mediaIf = rcCtx.getmediaPara();
-        JSONObject strCtx = new JSONObject();
+        JSONObject jsnObj = new JSONObject();
+        String usrOptTag = "playUrl";
 
         try {
-            strCtx.put("internetip", sysInfo.getStrInternetIp());// input from app server, net out ip address - nono
-            strCtx.put("dnsip", sysInfo.getStrDnsIp());         // get from app local, current device used dns ip address - okok
-            strCtx.put("cdnip", sysInfo.getStrCdnIp());         // get from app local, rtmp or http connect ip address - nono
-            strCtx.put("playurl", sysInfo.getStrPlayUrl());      // input from app server - nono
-            strCtx.put("pingms", sysInfo.getSysNet().getPingMs(sysInfo.getStrUrlDomain())); // get from app local - okok
-            strCtx.put("bindwidth", sysInfo.getSysNet().getAppNetRcvBw());            // get from app local - okok-0413
+            jsnObj.put("internetIp", playIf.getStrOutIp());// input from app server, net out ip address - nono
+            jsnObj.put("dnsIp", sysInfo.getStrDnsIp());         // get from app local, current device used dns ip address - okok
+            jsnObj.put("cdnIp", playIf.getStrCdnIp());         // get from app local, rtmp or http connect ip address - nono
+            jsnObj.put("pingms", sysInfo.getSysNet().getPingMs(playIf.getStrDomain())); // get from app local - okok
+            jsnObj.put("bindwidth", sysInfo.getSysNet().getAppNetRcvBw());            // get from app local - okok-0413
 
-            if (ReportCenter.REPORTER_TYPE_PUBLISH == sysInfo.getReporterType()) {
-                strCtx.put("width", mediaIf.getWidth());      // get from app local - nono
-                strCtx.put("height", mediaIf.getHeight());    // get from app local - nono
-                strCtx.put("currentfps", mediaIf.getFps());           // get from app local - nono
-                strCtx.put("bitrates", mediaIf.getBitRates());    // get from app local - nono
-                strCtx.put("lostfps", 10);        // get from app local - nono
-                strCtx.put("sendfail", 0);        // get from app local - nono
+            if (ReportCenter.SDK_REPORTER_TYPE_PUBLISH == rcCtx.getReporterType()) {
+                //strCtx.put("framesize", mediaIf.getWidth());      // get from app local - nono
+                jsnObj.put("diskfreespace", String.valueOf(sysInfo.getSdcardRate())+"%");      // get from app local - nono
+                jsnObj.put("width", mediaIf.getWidth());      // get from app local - nono
+                jsnObj.put("height", mediaIf.getHeight());    // get from app local - nono
+                jsnObj.put("currentfps", mediaIf.getFps());           // get from app local - nono
+                jsnObj.put("bitrates", mediaIf.getBitRates());    // get from app local - nono
+                jsnObj.put("lostfps", 10);        // get from app local - nono
+                jsnObj.put("sendfailnum", 0);        // get from app local - nono
+                usrOptTag = "pushUrl";
             }
+            jsnObj.put(usrOptTag, playIf.getStrUrl());      // input from app server - nono
         } catch (JSONException e) {
             e.printStackTrace();
         }
 //        Log.w(TAG, "----end");
-        return strCtx;
+        return jsnObj;
     }
-
 }

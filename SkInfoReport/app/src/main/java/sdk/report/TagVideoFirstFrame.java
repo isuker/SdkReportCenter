@@ -14,19 +14,17 @@ public class TagVideoFirstFrame {
     }
 
     public JSONObject toJson() {
-        JSONObject strCtx = new JSONObject();
+        JSONObject jsnObj = new JSONObject();
         ParamMediaInfo mediaIf = rcCtx.getmediaPara();
         try {
-            //strCtx.put("framesize", rcCtx.getmediaPara().getFrameSize());  // get from app local - nono
-            strCtx.put("width", mediaIf.getWidth());      // get from app local - nono
-            strCtx.put("height", mediaIf.getHeight());    // get from app local - nono
-            strCtx.put("fps", mediaIf.getFps());           // get from app local - nono
-            strCtx.put("bitrates", mediaIf.getBitRates());    // get from app local - nono
+            jsnObj.put("framesize", mediaIf.getFrameSize());  // get from app local - nono
+            jsnObj.put("width", mediaIf.getWidth());      // get from app local - nono
+            jsnObj.put("height", mediaIf.getHeight());    // get from app local - nono
+            jsnObj.put("fps", mediaIf.getFps());           // get from app local - nono
+            jsnObj.put("bitrates", mediaIf.getBitRates());    // get from app local - nono
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return strCtx;
+        return jsnObj;
     }
-
-
 }

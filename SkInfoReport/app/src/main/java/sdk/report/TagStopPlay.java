@@ -3,27 +3,30 @@ package sdk.report;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+
 /**
  * Created by suker on 16-4-6.
  */
 public class TagStopPlay {
-    private long playIntervalMin;
-
-    public long getPlayIntervalMin() {
-        return playIntervalMin;
-    }
+    private double playIntervalMin;
 
     public JSONObject toJson() {
-        JSONObject strCtx = new JSONObject();
+        JSONObject jsnObj = new JSONObject();
         try {
-            strCtx.put("interval", getPlayIntervalMin()); // get from stop-start ms, use minute - ok
+            jsnObj.put("playDuration", playIntervalMin); // get from stop-start ms, use minute - ok
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return strCtx;
+        return jsnObj;
     }
 
     public void setCostMs(long playMs) {
-        playIntervalMin = (System.currentTimeMillis() - playMs) / 1000 / 60;
+        double minute = (double) (System.currentTimeMillis() - playMs) / (1000 * 60);
+        BigDecimal b = new BigDecimal(minute);
+        playIntervalMin = b.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
+
+//    "playDuration": 0       //播放总时长，单位分钟
 }

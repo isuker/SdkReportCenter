@@ -9,21 +9,19 @@ import org.json.JSONObject;
 public class TagVideoFirstDisplay {
     private long firstDisplayCostMs;
 
-    public long getFirstDisplayCostMs() {
-        return firstDisplayCostMs;
-    }
-
     public JSONObject toJson() {
-        JSONObject strCtx = new JSONObject();
+        JSONObject jsnObj = new JSONObject();
         try {
-            strCtx.put("firstdisplaycostms", getFirstDisplayCostMs());    // get from app local - okok
+            jsnObj.put("loadingDuration", firstDisplayCostMs);    // get from app local - okok
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return strCtx;
+        return jsnObj;
     }
 
     public void setCostMs(long playMs) {
         firstDisplayCostMs = (System.currentTimeMillis() - playMs);
     }
+
+//    "loadingDuration": 20   //加载时长，单位秒
 }

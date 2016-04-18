@@ -9,10 +9,10 @@ import org.json.JSONObject;
 public class TagPlayFail {
     private int failNo;
     private String failMsg;
-    private SystemInfo sysInfo = null;
+    private ReportCenter rcCtx = null;
 
-    public TagPlayFail(SystemInfo sys) {
-        sysInfo = sys;
+    public TagPlayFail(ReportCenter rc) {
+        rcCtx = rc;
     }
 
     public int getFailNo() {
@@ -33,15 +33,18 @@ public class TagPlayFail {
 
 
     public JSONObject toJson() {
-        JSONObject strCtx = new JSONObject();
+        JSONObject jsnObj = new JSONObject();
+
         try {
-            strCtx.put("playurl", sysInfo.getStrPlayUrl());  // input from app server - nono
-            strCtx.put("failno", getFailNo());      // get from app local - nono
-            strCtx.put("failmsg", getFailMsg());    // get from app local - nono
+            jsnObj.put("playUrl", rcCtx.getParamPlay().getStrUrl());  // input from app server - nono
+            jsnObj.put("failCode", getFailNo());      // get from app local - nono
+            jsnObj.put("failMessage", getFailMsg());    // get from app local - nono
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return strCtx;
+        return jsnObj;
     }
-
+//"playUrl": "",
+//"failCode": "",
+//"failMessage": ""
 }
